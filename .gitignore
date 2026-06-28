@@ -1,0 +1,19 @@
+# LibreOffice
+~$*
+*.lock
+
+# PDF exports
+exports/pdf/*.pdf
+
+# Temporary files
+*.tmp
+*.bak
+
+# Linux
+*~
+
+# VS Code
+.vscode/
+
+# Python
+__pycache__/
