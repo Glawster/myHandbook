@@ -5,6 +5,7 @@
 - Simplified template metadata
 - introduced Part Tile and Part Subtitle styles
 - modified TOC contents styles and Chapter Numbering...
+- added a post0it note frame style to replace or use along side Manager's Journal
 
 ## v0.4.0
 - Added semantic paragraph styles
