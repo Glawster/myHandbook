@@ -1,0 +1,17 @@
+flowchart TD
+
+    A[Tactical Identity]
+
+    A --> B[Player Roles]
+
+    B --> C[Team Instructions]
+
+    C --> D[Observe Match]
+
+    D --> E{Problem Solved?}
+
+    E -->|Yes| F[Keep Instruction]
+
+    E -->|No| G[Adjust or Remove]
+
+    G --> D
