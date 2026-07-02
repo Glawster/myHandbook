@@ -1,0 +1,32 @@
+---
+title: The Manager's Cycle
+---
+
+flowchart TD
+
+    A([Observe the Match])
+
+    B[Identify the Problem]
+
+    C[Gather Evidence]
+
+    D[Form a Hypothesis]
+
+    E[Make One Tactical Change]
+
+    F[Observe the Next Phase]
+
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F -. Continuous Improvement .-> A
+
+    classDef start fill:#2E5AAC,color:#ffffff,stroke:#1F3D6D,stroke-width:2px
+    classDef process fill:#E8F0FB,color:#1F2937,stroke:#2E5AAC,stroke-width:1.5px
+    classDef feedback fill:#FFF8DC,color:#333333,stroke:#D4A017,stroke-width:1.5px
+
+    class A start
+    class B,C,D,E process
+    class F feedback

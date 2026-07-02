@@ -1,0 +1,26 @@
+flowchart LR
+
+    A[Match Situation]
+    B[Player Perceives Options]
+    C{Best Decision?}
+    D[Execute Action]
+    E[Outcome]
+    F[Poor Outcome]
+    G[Successful Outcome]
+
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    E --> G
+
+    classDef process fill:#E8F0FB,stroke:#2E5AAC
+    classDef decision fill:#FFF3CD,stroke:#C49000
+    classDef success fill:#D5F5D5,stroke:#3A7D44
+    classDef failure fill:#F8D7DA,stroke:#A94442
+
+    class A,B,D,E process
+    class C decision
+    class G success
+    class F failure

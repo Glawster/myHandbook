@@ -17,3 +17,6 @@ exports/pdf/*.pdf
 
 # Python
 __pycache__/
+
+node_modules/
+node_modules

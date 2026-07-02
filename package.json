@@ -1,0 +1,26 @@
+{
+  "name": "mymanagerhanbook",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Glawster/myManagerHandbook.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Glawster/myManagerHandbook/issues"
+  },
+  "homepage": "https://github.com/Glawster/myManagerHandbook#readme",
+  "dependencies": {
+    "@mermaid-js/mermaid-cli": "^11.16.0"
+  }
+}
