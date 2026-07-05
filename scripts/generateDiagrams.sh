@@ -34,10 +34,18 @@ if [ "${#volume_dirs[@]}" -eq 0 ]; then
 fi
 
 found_diagrams=0
+generated_diagrams=0
+skipped_diagrams=0
 
 while IFS= read -r -d '' input; do
     found_diagrams=1
     output="${input%.mmd}.svg"
+
+    if [ -f "$output" ] && [ ! "$input" -nt "$output" ]; then
+        echo "Skipping current: $output"
+        skipped_diagrams=$((skipped_diagrams + 1))
+        continue
+    fi
 
     echo "Generating: $output"
 
@@ -45,10 +53,12 @@ while IFS= read -r -d '' input; do
         -i "$input" \
         -o "$output" \
         -c "mermaidConfig.json"
+
+    generated_diagrams=$((generated_diagrams + 1))
 done < <(find "${volume_dirs[@]}" -type f -name "*.mmd" -print0)
 
 if [ "$found_diagrams" -eq 0 ]; then
     echo "No Mermaid diagrams found in Volume folders."
 fi
 
-echo "Done."
+echo "Done. Generated: $generated_diagrams. Skipped: $skipped_diagrams."

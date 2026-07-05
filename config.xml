@@ -1,0 +1,3 @@
+<record>
+	<boolean id="dont_scan" value="true"/>
+</record>

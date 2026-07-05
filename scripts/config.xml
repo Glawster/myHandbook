@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<record>
+    <boolean id="preload" value="false" />
+    <boolean id="amap" value="false" />
+    <list id="maps">
+        <record from="2000198448" to="graphics/pictures/person/2000198448/portrait" />
+        <record from="2000393320" to="graphics/pictures/person/2000393320/portrait" />
+        <record from="2000514351" to="graphics/pictures/person/2000514351/portrait" />
+    </list>
+</record>
