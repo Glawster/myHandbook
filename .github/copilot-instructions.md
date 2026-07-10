@@ -21,6 +21,8 @@
 
 These are master development guidelines for all projects.
 
+This document is intentionally Python application first.
+
 Project-specific details belong in:
 
 .github/additional-copilot-instructions.md
@@ -139,6 +141,8 @@ Rules:
 -   `src/` is optional and should be used for larger apps, reusable core logic, or UI-based apps\
 -   `ui/` is optional and should contain UI orchestration/assets where useful\
 -   Core/business logic must remain testable without the UI
+
+Non-application repository layout conventions (for example handbook chapter numbering, diagram locations, and template paths) must be defined in `.github/additional-copilot-instructions.md`, not in this master document.
 
 # CLI Design Standards
 
