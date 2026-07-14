@@ -4,6 +4,18 @@ A personal knowledge repository containing coaching manuals, reference manuals, 
 
 The aim is not to create formal publications. The aim is to keep practical documents in a consistent structure so they are easy to return to, improve and reuse.
 
+## Documentation
+
+- [Changelog](CHANGELOG.md)
+- [Contributing](CONTRIBUTING.md)
+- [FMParser Core Architecture](documentation/fmparserArchitecture.md)
+- [Reverse Engineering Notes](documentation/reverseEngineering.md)
+- [Roadmap](documentation/roadmap.md)
+- [Style Guide](documentation/styleGuide.md)
+- [Volume 1 Editorial Plan](documentation/volume1EditorialPlan.md)
+- [FM Parser Samples](fmparser/samples/README.md)
+- [Templates Changelog](templates/CHANGELOG.md)
+
 ## Current Areas
 
 - Football Manager Coaching Manual
