@@ -87,7 +87,6 @@ class Example:
     def configSave(self):
         pass
 
-
     ## message
 
     def messageExtract(self):
@@ -95,7 +94,6 @@ class Example:
 
     def messageParse(self):
         pass
-
 
     ## utilities
 
@@ -114,7 +112,7 @@ All applications must have a root entry point:
     └── .github/
         └── additional-copilot-instructions.md
 
-Larger applications may also use `src/` and `ui/` folders:
+Larger applications may also use `src/`, `ui/`, and `qt/` folders:
 
     projectName/
     ├── main.py
@@ -125,7 +123,7 @@ Larger applications may also use `src/` and `ui/` folders:
     │       ├── utils/
     │       └── patterns/
     ├── ui/
-    ├── Qt/ui
+    ├── qt/
     ├── tests/
     ├── requirements.txt
     ├── README.md
@@ -138,6 +136,9 @@ Rules:
 -   `main.py` sets the application logging context with `setApplication()`\
 -   `src/` is optional and should be used for larger apps, reusable core logic, or UI-based apps\
 -   `ui/` is optional and should contain UI orchestration/assets where useful\
+-   Documentation rule: only `README.md` may be at the project root; all other documentation must live under `documentation/`, and documentation file names should use camelCase except for `README.md`\
+-   The README must include a near-top Documentation section that links to every living guide in the repo so it remains the canonical entry point for all docs\
+-   Any routine that produces output files must place them in an `output/` folder directly under the project root\
 -   Core/business logic must remain testable without the UI
 
 # CLI Design Standards
@@ -187,6 +188,7 @@ Never expose `--dry-run` as the CLI flag. Use `dryRun` only as the internal bool
 ## Logging Pattern (logUtils)
 
 All projects must use centralized logging from `organiseMyProjects.logUtils`.
+Do not include "..." manually in log messages. logUtils owns prefixes/suffixes.
 
 ### Application context
 
@@ -272,10 +274,10 @@ def main() -> None:
     logger.done("finished")
 ```
 
-Use this in helper modules (do not import or redefine `thisApplication` outside `main.py`):
+Use this in helper modules (do not use `setApplication()` in helper modules):
 
 ``` python
-from organiseMyProjects.logUtils import getLogger, setApplication
+from organiseMyProjects.logUtils import getLogger
 
 logger = getLogger()
 ```
@@ -298,7 +300,7 @@ logger.value("month", config.monthWindow.monthKey)
 logger.value("dryRun", config.dryRun)
 ```
 
-Avoid:
+Output Examples:
 
 ``` python
 logger.doing("scanning files")           # → scanning files...
@@ -344,17 +346,11 @@ if not dryRun:
 
 Do not manually build dry-run prefixes or branch log wording by `dryRun`.
 
-### Value Logging Rule
+### Info/Value Logging Rule
 
-Use `logger.value("name", value)` when logging a single variable.
-
-Do not use:
-- `logger.info("name: %s", value)`
-- f-strings in `doing()` or `done()`
-
-Use `logger.info()` only for:
-- multiple variables
-- narrative messages
+Use logger.info() for narrative messages with no variables, or formatted messages with two or more variables.
+Use logger.value("name", value) for exactly one variable.
+No other logger methods should receive variable arguments.
 
 ### No fallback logging
 
@@ -363,7 +359,7 @@ External dependencies must fail fast. Never silently replace `logUtils`:
 ``` python
 # Do not do this
 try:
-    from organiseMyProjects.logUtils import getLogger
+    from organiseMyProjects.logUtils import getLogger, setApplication
 except Exception:
     import logging
 ```

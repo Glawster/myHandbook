@@ -1,82 +1,47 @@
-# FMParser
+# My Handbook
 
-`fmparser` is a Python 3.12+ reverse engineering toolkit for Football Manager tactic (`.fmf`)
-files. It starts with careful binary inspection and differential analysis, then gives the project a
-place to promote proven byte mappings into a real parser over time.
+A personal knowledge repository containing coaching manuals, reference manuals, notes and supporting material.
 
-## Install
+The aim is not to create formal publications. The aim is to keep practical documents in a consistent structure so they are easy to return to, improve and reuse.
 
-```bash
-python -m pip install -e ".[dev]"
-```
+## Documentation
 
-Optional compression probes:
+- [Changelog](CHANGELOG.md)
+- [Contributing](CONTRIBUTING.md)
+- [Reverse Engineering Notes](documentation/reverseEngineering.md)
+- [Roadmap](documentation/roadmap.md)
+- [Style Guide](documentation/styleGuide.md)
+- [Volume 1 Editorial Plan](documentation/volume1EditorialPlan.md)
+- [FM Parser Samples](fmparser/samples/README.md)
+- [Templates Changelog](templates/CHANGELOG.md)
 
-```bash
-python -m pip install -e ".[compression]"
-```
+## Current Areas
 
-## CLI
+- Football Manager Coaching Manual
+- Walking Football Coaching Manual
+- Linux Reference Manual
 
-```bash
-fmparser inspect tactic.fmf
-fmparser diff old.fmf new.fmf
-fmparser report tactic.fmf
-fmparser dump tactic.fmf
-fmparser strings tactic.fmf
-fmparser hex tactic.fmf
-fmparser structures tactic.fmf
-```
-
-Without installation, run:
-
-```bash
-python -m fmparser.cli inspect tactic.fmf
-```
-
-## Current Capabilities
-
-- File size, SHA-256, header bytes, observed-prefix detection, and tentative flags.
-- Entropy scans for likely compressed/encrypted blocks and likely structured/string-table areas.
-- ASCII string extraction with offsets.
-- Compression probes for zlib, gzip, lzma, raw deflate, and optional lz4/zstd.
-- Binary reader supporting integers, floats, endianness, variable-length integers, seeking, and
-  bookmarks.
-- Differential analysis that groups changed bytes from controlled experiments.
-- Repeated fixed-width structure discovery.
-- Markdown reports.
-
-## Architecture
+## Repository Structure
 
 ```text
-fmparser/
-    __init__.py
-    parser.py
-    structures.py
-    binary.py
-    compression.py
-    signatures.py
-    report.py
-    cli.py
-    diff.py
-    structures_discovery.py
-tests/
-samples/
-docs/
+templates/          Shared LibreOffice template and template assets
+documentation/      Living project guides and planning notes
+football-manager/   Football Manager coaching manual and supporting material
+walking-football/   Walking football coaching manual, drills and diagrams
+linux/              Linux reference manual, notes and scripts
+shared/             Shared icons, images and diagrams
+scripts/            Safe-by-default maintenance scripts
 ```
 
-## Reverse Engineering Discipline
+## Working Standard
 
-The parser does not yet claim to extract formation, mentality, roles, duties, or instructions. Those
-fields are intentionally nullable until controlled sample diffs prove their byte mappings.
+All manuals should use the shared LibreOffice template in `templates/`.
 
-Record discoveries in [`docs/reverse-engineering.md`](docs/reverse-engineering.md), including:
+The preferred workflow is:
 
-- offset
-- meaning
-- confidence
-- evidence
-- sample files used
-- notes
+1. Draft or refine the content.
+2. Paste into the LibreOffice document.
+3. Let the template styles do the formatting.
+4. Export final PDFs into the relevant `exports/` folder when needed.
 
-Unknown structures should stay documented rather than discarded.
+The template should do the work. If repeated manual style changes are needed, improve the template rather than accepting the extra step.

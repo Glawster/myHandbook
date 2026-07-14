@@ -17,6 +17,7 @@ exports/pdf/*.pdf
 
 # Python
 __pycache__/
+.pytest_cache/
 
 node_modules/
 node_modules

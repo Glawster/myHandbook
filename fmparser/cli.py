@@ -3,20 +3,32 @@
 from __future__ import annotations
 
 import argparse
-import logging
-from pathlib import Path
 import sys
+from pathlib import Path
 
-from fmparser.diff import diff_files
-from fmparser.parser import FMFTactic, FMFParser
-from fmparser.report import diff_report, inspection_report, structures_report
-from fmparser.signatures import ascii_strings
-from fmparser.structures_discovery import repeated_structures
+from organiseMyProjects.logUtils import getLogger, setApplication
+
+thisApplication = "myHandbook"
+setApplication(thisApplication)
+logger = getLogger(includeConsole=False)
+
+from fmparser.diff import diff_files  # noqa: E402
+from fmparser.parser import FMFTactic, FMFParser  # noqa: E402
+from fmparser.report import diff_report, inspection_report, structures_report  # noqa: E402
+from fmparser.signatures import ascii_strings  # noqa: E402
+from fmparser.structures_discovery import repeated_structures  # noqa: E402
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="fmparser")
     parser.add_argument("-v", "--verbose", action="count", default=0)
+    parser.add_argument(
+        "-y",
+        "--confirm",
+        dest="confirm",
+        action="store_true",
+        help="execute changes (default is dry-run)",
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     inspect = subparsers.add_parser("inspect", help="Inspect file signatures and sections")
@@ -48,39 +60,78 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
-    logging.basicConfig(level=logging.WARNING - min(args.verbose, 2) * 10)
+    global logger
 
-    if args.command == "inspect":
-        print(inspection_report(FMFParser().inspect(args.file)), end="")
-        return 0
-    if args.command == "diff":
-        print(diff_report(args.old, args.new, diff_files(args.old, args.new)), end="")
-        return 0
-    if args.command == "report":
-        tactic = FMFTactic.read(args.file)
-        print(_tactic_report(tactic), end="")
-        return 0
-    if args.command == "dump":
-        print(FMFTactic.read(args.file))
-        return 0
-    if args.command == "strings":
-        for item in ascii_strings(args.file.read_bytes(), minimum=args.minimum):
-            print(f"{item.offset}: {item.value}")
-        return 0
-    if args.command == "hex":
-        print(_hex(args.file.read_bytes(), offset=args.offset, length=args.length), end="")
-        return 0
-    if args.command == "structures":
-        print(structures_report(repeated_structures(args.file.read_bytes())), end="")
-        return 0
+    args = build_parser().parse_args(argv)
+    dryRun = not args.confirm
+    logger = getLogger(includeConsole=args.verbose > 0, dryRun=dryRun)
+    logger.doing("fmparser command")
+    logger.value("command", args.command)
+    logger.value("dryRun", dryRun)
+
+    try:
+        if args.command == "inspect":
+            filePath = pathValidateFile(args.file)
+            print(inspection_report(FMFParser().inspect(filePath)), end="")
+            logger.done("fmparser command")
+            return 0
+        if args.command == "diff":
+            oldPath = pathValidateFile(args.old)
+            newPath = pathValidateFile(args.new)
+            print(diff_report(oldPath, newPath, diff_files(oldPath, newPath)), end="")
+            logger.done("fmparser command")
+            return 0
+        if args.command == "report":
+            tactic = FMFTactic.read(pathValidateFile(args.file))
+            print(_tactic_report(tactic), end="")
+            logger.done("fmparser command")
+            return 0
+        if args.command == "dump":
+            print(FMFTactic.read(pathValidateFile(args.file)))
+            logger.done("fmparser command")
+            return 0
+        if args.command == "strings":
+            filePath = pathValidateFile(args.file)
+            for item in ascii_strings(filePath.read_bytes(), minimum=args.minimum):
+                print(f"{item.offset}: {item.value}")
+            logger.done("fmparser command")
+            return 0
+        if args.command == "hex":
+            filePath = pathValidateFile(args.file)
+            print(_hex(filePath.read_bytes(), offset=args.offset, length=args.length), end="")
+            logger.done("fmparser command")
+            return 0
+        if args.command == "structures":
+            filePath = pathValidateFile(args.file)
+            print(structures_report(repeated_structures(filePath.read_bytes())), end="")
+            logger.done("fmparser command")
+            return 0
+    except Exception as error:
+        logger.error("fmparser command failed: %s", error)
+        print(f"Error: {error}", file=sys.stderr)
+        return 1
+
     return 2
 
 
+def pathValidateFile(filePath: Path) -> Path:
+    """Resolve and validate an input file path before processing."""
+    resolvedPath = filePath.expanduser().resolve()
+    if not resolvedPath.is_file():
+        raise FileNotFoundError(f"Input file does not exist: {resolvedPath}")
+    return resolvedPath
+
+
 def _hex(data: bytes, *, offset: int, length: int) -> str:
+    if offset < 0:
+        raise ValueError("offset must be non-negative")
+    if length < 0:
+        raise ValueError("length must be non-negative")
+
     lines: list[str] = []
-    for row_offset in range(offset, min(len(data), offset + length), 16):
-        row = data[row_offset : row_offset + 16]
+    stopOffset = min(len(data), offset + length)
+    for row_offset in range(offset, stopOffset, 16):
+        row = data[row_offset : min(row_offset + 16, stopOffset)]
         hex_bytes = " ".join(f"{byte:02x}" for byte in row)
         ascii_bytes = "".join(chr(byte) if 32 <= byte <= 126 else "." for byte in row)
         lines.append(f"{row_offset:08x}  {hex_bytes:<47}  {ascii_bytes}")
@@ -101,7 +152,10 @@ def _tactic_report(tactic: FMFTactic) -> str:
         "-----",
     ]
     if tactic.players:
-        lines.extend(f"{player.position}: {player.role or 'unknown'} ({player.duty or 'unknown'})" for player in tactic.players)
+        lines.extend(
+            f"{player.position}: {player.role or 'unknown'} ({player.duty or 'unknown'})"
+            for player in tactic.players
+        )
     else:
         lines.append("unknown")
     lines.extend(["", "Instructions", "------------"])

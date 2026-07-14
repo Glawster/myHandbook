@@ -8,4 +8,7 @@ def test_cli_hex(tmp_path: Path, capsys) -> None:  # type: ignore[no-untyped-def
     sample.write_bytes(b"abcdef")
 
     assert main(["hex", str(sample), "--length", "6"]) == 0
-    assert "61 62 63" in capsys.readouterr().out
+    output = capsys.readouterr().out
+
+    assert "61 62 63 64 65 66" in output
+    assert "00 00" not in output
