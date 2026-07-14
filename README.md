@@ -4,6 +4,17 @@ A personal knowledge repository containing coaching manuals, reference manuals, 
 
 The aim is not to create formal publications. The aim is to keep practical documents in a consistent structure so they are easy to return to, improve and reuse.
 
+## Documentation
+
+- [Changelog](CHANGELOG.md)
+- [Contributing](CONTRIBUTING.md)
+- [Reverse Engineering Notes](documentation/reverseEngineering.md)
+- [Roadmap](documentation/roadmap.md)
+- [Style Guide](documentation/styleGuide.md)
+- [Volume 1 Editorial Plan](documentation/volume1EditorialPlan.md)
+- [FM Parser Samples](fmparser/samples/README.md)
+- [Templates Changelog](templates/CHANGELOG.md)
+
 ## Current Areas
 
 - Football Manager Coaching Manual
@@ -14,10 +25,12 @@ The aim is not to create formal publications. The aim is to keep practical docum
 
 ```text
 templates/          Shared LibreOffice template and template assets
+documentation/      Living project guides and planning notes
 football-manager/   Football Manager coaching manual and supporting material
 walking-football/   Walking football coaching manual, drills and diagrams
 linux/              Linux reference manual, notes and scripts
 shared/             Shared icons, images and diagrams
+scripts/            Safe-by-default maintenance scripts
 ```
 
 ## Working Standard

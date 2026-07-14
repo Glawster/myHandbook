@@ -7,7 +7,7 @@ name = "fmparser"
 version = "0.1.0"
 description = "Reverse engineering toolkit for Football Manager tactic files"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 license = "MIT"
 authors = [{ name = "FMParser contributors" }]
 dependencies = []
@@ -25,11 +25,11 @@ pythonpath = ["."]
 
 [tool.ruff]
 line-length = 100
-target-version = "py312"
+target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.10"
 strict = true
