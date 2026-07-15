@@ -12,17 +12,17 @@ thisApplication = "myHandbook"
 setApplication(thisApplication)
 logger = getLogger(includeConsole=False)
 
-from fmparser.diff import diff_files  # noqa: E402
-from fmparser.bundleFilter import filter_assets  # noqa: E402
+from fmparser.bundleFilter import assetsFilter  # noqa: E402
 from fmparser.bundles import BundleError, UnityPyBundleReader  # noqa: E402
+from fmparser.diff import diff_files  # noqa: E402
 from fmparser.parser import FMFTactic, FMFParser  # noqa: E402
 from fmparser.report import diff_report, inspection_report, structures_report  # noqa: E402
 from fmparser.signatures import ascii_strings  # noqa: E402
 from fmparser.structures import AssetData, AssetInfo, BundleInfo  # noqa: E402
-from fmparser.structures_discovery import repeated_structures  # noqa: E402
+from fmparser.structuresDiscovery import repeatedStructures  # noqa: E402
 
 
-def build_parser() -> argparse.ArgumentParser:
+def buildParser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="fmparser")
     parser.add_argument("-v", "--verbose", action="count", default=0)
     parser.add_argument(
@@ -81,7 +81,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     global logger
 
-    args = build_parser().parse_args(argv)
+    args = buildParser().parse_args(argv)
     dryRun = not args.confirm
     logger = getLogger(includeConsole=args.verbose > 0, dryRun=dryRun)
     logger.doing("fmparser command")
@@ -102,7 +102,7 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         if args.command == "report":
             tactic = FMFTactic.read(pathValidateFile(args.file))
-            print(_tactic_report(tactic), end="")
+            print(_tacticReport(tactic), end="")
             logger.done("fmparser command")
             return 0
         if args.command == "dump":
@@ -127,7 +127,7 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         if args.command == "bundle":
             if args.bundle_command == "gui":
-                from fmparser.qt_bundle_explorer import main as qt_main
+                from fmparser.qtBundleExplorer import main as qt_main
 
                 return qt_main([str(args.file)] if args.file else [])
 
@@ -135,12 +135,12 @@ def main(argv: list[str] | None = None) -> int:
             reader = UnityPyBundleReader()
             info = reader.open(filePath)
             if args.bundle_command == "list":
-                assets = filter_assets(reader.list_assets(), text=args.filter, asset_type=args.type)
-                print(_bundle_list_report(info, assets[: max(0, args.limit)]), end="")
+                assets = assetsFilter(reader.assetsList(), text=args.filter, asset_type=args.type)
+                print(_bundleListReport(info, assets[: max(0, args.limit)]), end="")
                 logger.done("fmparser command")
                 return 0
             if args.bundle_command == "preview":
-                print(_asset_data_report(reader.read_asset(args.asset_id)), end="")
+                print(_assetDataReport(reader.assetRead(args.asset_id)), end="")
                 logger.done("fmparser command")
                 return 0
     except BundleError as error:
@@ -179,7 +179,7 @@ def _hex(data: bytes, *, offset: int, length: int) -> str:
     return "\n".join(lines) + ("\n" if lines else "")
 
 
-def _tactic_report(tactic: FMFTactic) -> str:
+def _tacticReport(tactic: FMFTactic) -> str:
     lines = [
         "Formation",
         "---------",
@@ -204,7 +204,7 @@ def _tactic_report(tactic: FMFTactic) -> str:
     return "\n".join(lines) + "\n"
 
 
-def _bundle_list_report(info: BundleInfo, assets: tuple[AssetInfo, ...]) -> str:
+def _bundleListReport(info: BundleInfo, assets: tuple[AssetInfo, ...]) -> str:
     lines = [
         "Bundle",
         "------",
@@ -230,7 +230,7 @@ def _bundle_list_report(info: BundleInfo, assets: tuple[AssetInfo, ...]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def _asset_data_report(data: AssetData) -> str:
+def _assetDataReport(data: AssetData) -> str:
     lines = [
         "Asset",
         "-----",

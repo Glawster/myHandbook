@@ -7,7 +7,7 @@ from collections import Counter
 from fmparser.structures import RepeatedStructureCandidate
 
 
-def repeated_structures(
+def repeatedStructures(
     data: bytes,
     *,
     min_record_length: int = 4,
