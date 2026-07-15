@@ -10,6 +10,8 @@ The aim is not to create formal publications. The aim is to keep practical docum
 - [Contributing](CONTRIBUTING.md)
 - [Reverse Engineering Notes](documentation/reverseEngineering.md)
 - [FM26 Skin Bundle Explorer](documentation/skinBundleExplorer.md)
+- [FMParser Core Architecture](documentation/fmparserArchitecture.md)
+- [Reverse Engineering Notes](documentation/reverseEngineering.md)
 - [Roadmap](documentation/roadmap.md)
 - [Style Guide](documentation/styleGuide.md)
 - [Volume 1 Editorial Plan](documentation/volume1EditorialPlan.md)
