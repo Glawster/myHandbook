@@ -22,7 +22,7 @@ gui = ["PySide6>=6.7.0"]
 fmparser = "fmparser.cli:main"
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["fmparser/tests"]
 pythonpath = ["."]
 
 [tool.ruff]
