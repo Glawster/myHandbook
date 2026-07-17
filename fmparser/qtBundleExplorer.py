@@ -335,6 +335,9 @@ class BundleExplorerWindow(QMainWindow):
         self._bundle_path: Path | None = None
         self._assets: tuple[AssetInfo, ...] = ()
         self._selected_asset_id: int | None = None
+        self._history: list[int] = []
+        self._history_index = -1
+        self._history_replaying = False
         self._deep_search_generation = 0
         self._deep_search_running = False
 
@@ -400,6 +403,7 @@ class BundleExplorerWindow(QMainWindow):
         self._bundle_path = None
         self._assets = ()
         self._selected_asset_id = None
+        self._historyClear()
         self._deep_search_generation += 1
         self._deep_search_running = False
         self._model.assetsSet(())
@@ -428,6 +432,16 @@ class BundleExplorerWindow(QMainWindow):
         refresh_action = QAction("Refresh", self)
         refresh_action.triggered.connect(self._bundleRefresh)
         toolbar.addAction(refresh_action)
+
+        toolbar.addSeparator()
+        self._back_action = QAction("Back", self)
+        self._back_action.triggered.connect(self._historyBack)
+        toolbar.addAction(self._back_action)
+
+        self._forward_action = QAction("Forward", self)
+        self._forward_action.triggered.connect(self._historyForward)
+        toolbar.addAction(self._forward_action)
+        self._historyActionsUpdate()
 
         copy_action = QAction("Copy Metadata", self)
         copy_action.triggered.connect(self._metadataCopy)
@@ -505,6 +519,8 @@ class BundleExplorerWindow(QMainWindow):
         if asset is None:
             return
         self._selected_asset_id = asset.path_id
+        if not self._history_replaying:
+            self._historyPush(asset.path_id)
         self._metadata.setPlainText(_metadataText(asset))
         self._preview.setPlainText("Loading preview...")
         self._references_model.referencesSet(())
@@ -551,6 +567,7 @@ class BundleExplorerWindow(QMainWindow):
         self._assets = assets
         self._deep_search_generation += 1
         self._deep_search_running = False
+        self._historyClear()
         self._settings.setValue("last_bundle_dir", str(info.path.parent))
         self._model.assetsSet(assets)
         self._proxy.serializedSearchTextSet({})
@@ -633,7 +650,7 @@ class BundleExplorerWindow(QMainWindow):
             return
         self._reverse_references_model.referencesSet(self._reader.reverseReferences(asset_id))
 
-    def _assetSelectById(self, path_id: int) -> None:
+    def _assetSelectById(self, path_id: int, *, add_history: bool = True) -> None:
         for row in range(self._model.rowCount()):
             asset = self._model.assetAt(row)
             if asset is None or asset.path_id != path_id:
@@ -641,9 +658,50 @@ class BundleExplorerWindow(QMainWindow):
             source_index = self._model.index(row, 0)
             proxy_index = self._proxy.mapFromSource(source_index)
             if proxy_index.isValid():
-                self._table.setCurrentIndex(proxy_index)
-                self._table.scrollTo(proxy_index)
+                previous = self._history_replaying
+                self._history_replaying = not add_history
+                try:
+                    self._table.setCurrentIndex(proxy_index)
+                    self._table.scrollTo(proxy_index)
+                finally:
+                    self._history_replaying = previous
             return
+
+    def _historyPush(self, path_id: int) -> None:
+        if self._history_index >= 0 and self._history[self._history_index] == path_id:
+            return
+        if self._history_index < len(self._history) - 1:
+            self._history = self._history[: self._history_index + 1]
+        self._history.append(path_id)
+        self._history_index = len(self._history) - 1
+        self._historyActionsUpdate()
+
+    def _historyBack(self) -> None:
+        if self._history_index <= 0:
+            return
+        self._history_index -= 1
+        self._historyActionsUpdate()
+        self._assetSelectById(self._history[self._history_index], add_history=False)
+
+    def _historyForward(self) -> None:
+        if self._history_index >= len(self._history) - 1:
+            return
+        self._history_index += 1
+        self._historyActionsUpdate()
+        self._assetSelectById(self._history[self._history_index], add_history=False)
+
+    def _historyClear(self) -> None:
+        self._history = []
+        self._history_index = -1
+        self._historyActionsUpdate()
+
+    def _historyActionsUpdate(self) -> None:
+        back_action = getattr(self, "_back_action", None)
+        forward_action = getattr(self, "_forward_action", None)
+        if back_action is not None:
+            back_action.setEnabled(self._history_index > 0)
+        if forward_action is not None:
+            forward_action.setEnabled(self._history_index < len(self._history) - 1)
 
     def _typeSummarySet(self, assets: Sequence[AssetInfo]) -> None:
         self._type_summary.clear()
