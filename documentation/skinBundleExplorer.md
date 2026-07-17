@@ -28,26 +28,26 @@ pip install ".[bundles,gui]"
 List assets in one bundle:
 
 ```bash
-fmparser bundle list /path/to/ui-widgets_assets_all.bundle
+fmparser --unity /path/to/ui-widgets_assets_all.bundle --list
 ```
 
 Filter by text or type:
 
 ```bash
-fmparser bundle list /path/to/ui-widgets_assets_all.bundle --filter player --type VisualTreeAsset
+fmparser --unity /path/to/ui-widgets_assets_all.bundle --list --filter player --type VisualTreeAsset
 ```
 
 Preview one safely readable asset:
 
 ```bash
-fmparser bundle preview /path/to/ui-widgets_assets_all.bundle 123456789
+fmparser --unity /path/to/ui-widgets_assets_all.bundle --preview 123456789
 ```
 
 Launch the Qt explorer:
 
 ```bash
-fmparser bundle gui
-fmparser bundle gui /path/to/ui-widgets_assets_all.bundle
+fmparser --gui
+fmparser --unity /path/to/ui-widgets_assets_all.bundle --gui
 ```
 
 ## Qt Prototype
