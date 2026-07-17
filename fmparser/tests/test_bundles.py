@@ -77,6 +77,8 @@ def testBundleReaderListsAndReadsAssets(tmp_path: Path, monkeypatch) -> None:  #
     data = reader.assetRead(123)
     search_text = reader.assetSearchText(123)
     references = reader.assetReferences(123)
+    reader.referencesBuild()
+    reverse_references = reader.reverseReferences(456)
 
     assert info.signature == "UnityFS"
     assert info.asset_count == 2
@@ -92,3 +94,6 @@ def testBundleReaderListsAndReadsAssets(tmp_path: Path, monkeypatch) -> None:  #
     assert references[0].asset_name == "target"
     assert references[0].asset_type == "VisualTreeAsset"
     assert references[0].relationship == "target"
+    assert reverse_references[0].path_id == 123
+    assert reverse_references[0].asset_name == "hello"
+    assert reverse_references[0].relationship == "target"

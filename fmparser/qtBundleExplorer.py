@@ -301,6 +301,28 @@ class _ReferencesWorker(QRunnable):
         self.signals.finished.emit(self.generation, self.asset_id, references)
 
 
+class _ReferenceIndexSignals(QObject):
+    finished = Signal(int)
+    failed = Signal(str, str)
+
+
+class _ReferenceIndexWorker(QRunnable):
+    def __init__(self, reader: UnityPyBundleReader, generation: int) -> None:
+        super().__init__()
+        self.reader = reader
+        self.generation = generation
+        self.signals = _ReferenceIndexSignals()
+
+    @Slot()
+    def run(self) -> None:
+        try:
+            self.reader.referencesBuild()
+        except Exception as error:  # noqa: BLE001 - send readable dialog plus log detail.
+            self.signals.failed.emit(str(error), traceback.format_exc())
+            return
+        self.signals.finished.emit(self.generation)
+
+
 class BundleExplorerWindow(QMainWindow):
     """Initial read-only bundle explorer window."""
 
@@ -335,6 +357,13 @@ class BundleExplorerWindow(QMainWindow):
         self._references.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
         self._references.setSelectionMode(QTableView.SelectionMode.SingleSelection)
         self._references.doubleClicked.connect(self._referenceActivated)
+        self._reverse_references_model = ReferenceTableModel()
+        self._reverse_references = QTableView()
+        self._reverse_references.setModel(self._reverse_references_model)
+        self._reverse_references.setSortingEnabled(True)
+        self._reverse_references.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
+        self._reverse_references.setSelectionMode(QTableView.SelectionMode.SingleSelection)
+        self._reverse_references.doubleClicked.connect(self._reverseReferenceActivated)
 
         self._filter = QLineEdit()
         self._filter.setPlaceholderText("Filter name, type, container, or path ID")
@@ -376,6 +405,7 @@ class BundleExplorerWindow(QMainWindow):
         self._model.assetsSet(())
         self._proxy.serializedSearchTextSet({})
         self._references_model.referencesSet(())
+        self._reverse_references_model.referencesSet(())
         self._typeSummarySet(())
         self._metadata.clear()
         self._preview.clear()
@@ -421,6 +451,7 @@ class BundleExplorerWindow(QMainWindow):
         tabs.addTab(self._metadata, "Metadata")
         tabs.addTab(self._preview, "Serialized Preview")
         tabs.addTab(self._references, "References")
+        tabs.addTab(self._reverse_references, "Referenced By")
         right.addWidget(tabs)
         right.addWidget(self._log)
 
@@ -477,6 +508,7 @@ class BundleExplorerWindow(QMainWindow):
         self._metadata.setPlainText(_metadataText(asset))
         self._preview.setPlainText("Loading preview...")
         self._references_model.referencesSet(())
+        self._reverseReferencesRefresh(asset.path_id)
         worker = _PreviewWorker(self._reader, asset.path_id)
         worker.signals.finished.connect(self._previewReady)
         worker.signals.failed.connect(self._workerFailed)
@@ -493,6 +525,13 @@ class BundleExplorerWindow(QMainWindow):
     def _referenceActivated(self, index: QModelIndex) -> None:
         source_row = index.row()
         reference = self._references_model.referenceAt(source_row)
+        if reference is None or reference.path_id is None:
+            return
+        self._assetSelectById(reference.path_id)
+
+    def _reverseReferenceActivated(self, index: QModelIndex) -> None:
+        source_row = index.row()
+        reference = self._reverse_references_model.referenceAt(source_row)
         if reference is None or reference.path_id is None:
             return
         self._assetSelectById(reference.path_id)
@@ -516,11 +555,13 @@ class BundleExplorerWindow(QMainWindow):
         self._model.assetsSet(assets)
         self._proxy.serializedSearchTextSet({})
         self._references_model.referencesSet(())
+        self._reverse_references_model.referencesSet(())
         self._typeSummarySet(assets)
         self._metadata.setPlainText(_bundleText(info))
         self._preview.clear()
         self._log.appendPlainText(f"Opened {info.file_name}: {info.asset_count} assets")
         self.statusBar().showMessage(f"Opened {info.file_name}")
+        self._referenceIndexStart()
 
     def _previewReady(self, data: AssetData) -> None:
         self._metadata.setPlainText(_metadataText(data.asset))
@@ -569,6 +610,28 @@ class BundleExplorerWindow(QMainWindow):
             return
         self._references_model.referencesSet(references)
         self.statusBar().showMessage(f"Loaded {len(references)} references for {asset_id}", 2500)
+
+    def _referenceIndexStart(self) -> None:
+        if self._reader is None:
+            return
+        worker = _ReferenceIndexWorker(self._reader, self._deep_search_generation)
+        worker.signals.finished.connect(self._referenceIndexReady)
+        worker.signals.failed.connect(self._workerFailed)
+        self._thread_pool.start(worker)
+        self.statusBar().showMessage("Building reverse reference index...")
+
+    def _referenceIndexReady(self, generation: int) -> None:
+        if generation != self._deep_search_generation:
+            return
+        if self._selected_asset_id is not None:
+            self._reverseReferencesRefresh(self._selected_asset_id)
+        self.statusBar().showMessage("Reverse reference index ready", 2500)
+
+    def _reverseReferencesRefresh(self, asset_id: int) -> None:
+        if self._reader is None:
+            self._reverse_references_model.referencesSet(())
+            return
+        self._reverse_references_model.referencesSet(self._reader.reverseReferences(asset_id))
 
     def _assetSelectById(self, path_id: int) -> None:
         for row in range(self._model.rowCount()):

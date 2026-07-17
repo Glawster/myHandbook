@@ -61,6 +61,8 @@ class UnityPyBundleReader(BundleReader):
         self._assets_by_id: dict[int, AssetInfo] = {}
         self._serialized_search_text: dict[int, str] = {}
         self._references_by_id: dict[int, tuple[AssetReference, ...]] = {}
+        self._reverse_references_by_id: dict[int, tuple[AssetReference, ...]] = {}
+        self._reference_index_built = False
 
     def open(self, path: Path) -> BundleInfo:
         bundle_path = path.expanduser().resolve()
@@ -84,6 +86,8 @@ class UnityPyBundleReader(BundleReader):
         self._path = bundle_path
         self._serialized_search_text = {}
         self._references_by_id = {}
+        self._reverse_references_by_id = {}
+        self._reference_index_built = False
         self._objects_by_id = {
             int(getattr(item, "path_id", 0)): item
             for item in getattr(environment, "objects", [])
@@ -233,6 +237,40 @@ class UnityPyBundleReader(BundleReader):
         enriched = tuple(_referenceEnrich(ref, self._assets_by_id) for ref in refs)
         self._references_by_id[asset_id] = enriched
         return enriched
+
+    def referencesBuild(self) -> None:
+        """Build the forward and reverse reference indexes once for this bundle."""
+
+        self._requireOpen()
+        if self._reference_index_built:
+            return
+
+        reverse: dict[int, dict[tuple[int | None, str | None], AssetReference]] = {}
+        for asset in self._assets:
+            for reference in self.assetReferences(asset.path_id):
+                if reference.path_id is None:
+                    continue
+                source = AssetReference(
+                    path_id=asset.path_id,
+                    asset_path=asset.container_path,
+                    asset_type=asset.asset_type,
+                    asset_name=asset.asset_name,
+                    relationship=reference.relationship,
+                )
+                key = (source.path_id, source.relationship)
+                reverse.setdefault(reference.path_id, {}).setdefault(key, source)
+        self._reverse_references_by_id = {
+            path_id: tuple(refs.values()) for path_id, refs in reverse.items()
+        }
+        self._reference_index_built = True
+
+    def reverseReferences(self, asset_id: int) -> tuple[AssetReference, ...]:
+        """Return assets that reference the selected asset."""
+
+        self._requireOpen()
+        if not self._reference_index_built:
+            return ()
+        return self._reverse_references_by_id.get(asset_id, ())
 
     def _requireOpen(self) -> None:
         if self._environment is None or self._path is None:
