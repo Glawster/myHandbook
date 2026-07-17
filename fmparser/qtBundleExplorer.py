@@ -11,7 +11,7 @@ from typing import Any
 
 from fmparser.bundleFilter import assetsFilter
 from fmparser.bundles import BundleError, UnityPyBundleReader
-from fmparser.structures import AssetData, AssetInfo, BundleInfo
+from fmparser.structures import AssetData, AssetInfo, AssetReference, BundleInfo
 
 try:
     from PySide6.QtCore import (
@@ -41,6 +41,7 @@ try:
         QPushButton,
         QSplitter,
         QStatusBar,
+        QTabWidget,
         QTableView,
         QToolBar,
         QVBoxLayout,
@@ -147,6 +148,60 @@ class AssetFilterProxyModel(QSortFilterProxyModel):
         return query in self._serialized_text_by_id.get(asset.path_id, "")
 
 
+class ReferenceTableModel(QAbstractTableModel):
+    """Qt table model for asset references."""
+
+    COLUMNS = ("Path ID", "Type", "Name", "Relationship")
+
+    def __init__(self, references: Sequence[AssetReference] | None = None) -> None:
+        super().__init__()
+        self._references = list(references or ())
+
+    def referencesSet(self, references: Sequence[AssetReference]) -> None:
+        self.beginResetModel()
+        self._references = list(references)
+        self.endResetModel()
+
+    def referenceAt(self, row: int) -> AssetReference | None:
+        if row < 0 or row >= len(self._references):
+            return None
+        return self._references[row]
+
+    def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:  # noqa: N802
+        return 0 if parent.isValid() else len(self._references)
+
+    def columnCount(self, parent: QModelIndex = QModelIndex()) -> int:  # noqa: N802
+        return 0 if parent.isValid() else len(self.COLUMNS)
+
+    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
+        if not index.isValid() or role not in (Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.UserRole):
+            return None
+        reference = self._references[index.row()]
+        values = (
+            reference.path_id if reference.path_id is not None else "",
+            reference.asset_type or "",
+            reference.asset_name or reference.asset_path or reference.external or "",
+            reference.relationship or "",
+        )
+        return values[index.column()]
+
+    def headerData(  # noqa: N802
+        self,
+        section: int,
+        orientation: Qt.Orientation,
+        role: int = Qt.ItemDataRole.DisplayRole,
+    ) -> Any:
+        if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
+            return self.COLUMNS[section]
+        return None
+
+    def sort(self, column: int, order: Qt.SortOrder = Qt.SortOrder.AscendingOrder) -> None:
+        reverse = order == Qt.SortOrder.DescendingOrder
+        self.layoutAboutToBeChanged.emit()
+        self._references.sort(key=lambda reference: _referenceSortValue(reference, column), reverse=reverse)
+        self.layoutChanged.emit()
+
+
 class _OpenSignals(QObject):
     finished = Signal(object, object, object)
     failed = Signal(str, str)
@@ -223,6 +278,29 @@ class _DeepSearchWorker(QRunnable):
         self.signals.finished.emit(self.generation, values)
 
 
+class _ReferencesSignals(QObject):
+    finished = Signal(int, int, object)
+    failed = Signal(str, str)
+
+
+class _ReferencesWorker(QRunnable):
+    def __init__(self, reader: UnityPyBundleReader, asset_id: int, generation: int) -> None:
+        super().__init__()
+        self.reader = reader
+        self.asset_id = asset_id
+        self.generation = generation
+        self.signals = _ReferencesSignals()
+
+    @Slot()
+    def run(self) -> None:
+        try:
+            references = self.reader.assetReferences(self.asset_id)
+        except Exception as error:  # noqa: BLE001 - send readable dialog plus log detail.
+            self.signals.failed.emit(str(error), traceback.format_exc())
+            return
+        self.signals.finished.emit(self.generation, self.asset_id, references)
+
+
 class BundleExplorerWindow(QMainWindow):
     """Initial read-only bundle explorer window."""
 
@@ -234,6 +312,7 @@ class BundleExplorerWindow(QMainWindow):
         self._reader: UnityPyBundleReader | None = None
         self._bundle_path: Path | None = None
         self._assets: tuple[AssetInfo, ...] = ()
+        self._selected_asset_id: int | None = None
         self._deep_search_generation = 0
         self._deep_search_running = False
 
@@ -248,6 +327,14 @@ class BundleExplorerWindow(QMainWindow):
         self._table.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
         self._table.setSelectionMode(QTableView.SelectionMode.SingleSelection)
         self._table.selectionModel().currentRowChanged.connect(self._assetSelected)
+
+        self._references_model = ReferenceTableModel()
+        self._references = QTableView()
+        self._references.setModel(self._references_model)
+        self._references.setSortingEnabled(True)
+        self._references.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
+        self._references.setSelectionMode(QTableView.SelectionMode.SingleSelection)
+        self._references.doubleClicked.connect(self._referenceActivated)
 
         self._filter = QLineEdit()
         self._filter.setPlaceholderText("Filter name, type, container, or path ID")
@@ -283,10 +370,12 @@ class BundleExplorerWindow(QMainWindow):
         self._reader = None
         self._bundle_path = None
         self._assets = ()
+        self._selected_asset_id = None
         self._deep_search_generation += 1
         self._deep_search_running = False
         self._model.assetsSet(())
         self._proxy.serializedSearchTextSet({})
+        self._references_model.referencesSet(())
         self._typeSummarySet(())
         self._metadata.clear()
         self._preview.clear()
@@ -328,8 +417,11 @@ class BundleExplorerWindow(QMainWindow):
         left_layout.addWidget(self._table)
 
         right = QSplitter(Qt.Orientation.Vertical)
-        right.addWidget(self._metadata)
-        right.addWidget(self._preview)
+        tabs = QTabWidget()
+        tabs.addTab(self._metadata, "Metadata")
+        tabs.addTab(self._preview, "Serialized Preview")
+        tabs.addTab(self._references, "References")
+        right.addWidget(tabs)
         right.addWidget(self._log)
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -381,12 +473,29 @@ class BundleExplorerWindow(QMainWindow):
         asset = self._model.assetAt(source_index.row())
         if asset is None:
             return
+        self._selected_asset_id = asset.path_id
         self._metadata.setPlainText(_metadataText(asset))
         self._preview.setPlainText("Loading preview...")
+        self._references_model.referencesSet(())
         worker = _PreviewWorker(self._reader, asset.path_id)
         worker.signals.finished.connect(self._previewReady)
         worker.signals.failed.connect(self._workerFailed)
         self._thread_pool.start(worker)
+        references_worker = _ReferencesWorker(
+            self._reader,
+            asset.path_id,
+            self._deep_search_generation,
+        )
+        references_worker.signals.finished.connect(self._referencesReady)
+        references_worker.signals.failed.connect(self._workerFailed)
+        self._thread_pool.start(references_worker)
+
+    def _referenceActivated(self, index: QModelIndex) -> None:
+        source_row = index.row()
+        reference = self._references_model.referenceAt(source_row)
+        if reference is None or reference.path_id is None:
+            return
+        self._assetSelectById(reference.path_id)
 
     def _metadataCopy(self) -> None:
         QApplication.clipboard().setText(self._metadata.toPlainText())
@@ -406,6 +515,7 @@ class BundleExplorerWindow(QMainWindow):
         self._settings.setValue("last_bundle_dir", str(info.path.parent))
         self._model.assetsSet(assets)
         self._proxy.serializedSearchTextSet({})
+        self._references_model.referencesSet(())
         self._typeSummarySet(assets)
         self._metadata.setPlainText(_bundleText(info))
         self._preview.clear()
@@ -447,6 +557,31 @@ class BundleExplorerWindow(QMainWindow):
         self._proxy.serializedSearchTextSet(values)
         self.statusBar().showMessage("Serialized search cache ready", 2500)
 
+    def _referencesReady(
+        self,
+        generation: int,
+        asset_id: int,
+        references: tuple[AssetReference, ...],
+    ) -> None:
+        if generation != self._deep_search_generation:
+            return
+        if asset_id != self._selected_asset_id:
+            return
+        self._references_model.referencesSet(references)
+        self.statusBar().showMessage(f"Loaded {len(references)} references for {asset_id}", 2500)
+
+    def _assetSelectById(self, path_id: int) -> None:
+        for row in range(self._model.rowCount()):
+            asset = self._model.assetAt(row)
+            if asset is None or asset.path_id != path_id:
+                continue
+            source_index = self._model.index(row, 0)
+            proxy_index = self._proxy.mapFromSource(source_index)
+            if proxy_index.isValid():
+                self._table.setCurrentIndex(proxy_index)
+                self._table.scrollTo(proxy_index)
+            return
+
     def _typeSummarySet(self, assets: Sequence[AssetInfo]) -> None:
         self._type_summary.clear()
         for asset_type, count in _typeCounts(assets):
@@ -480,6 +615,16 @@ def _sortValue(asset: AssetInfo, column: int) -> str | int:
 def _typeCounts(assets: Sequence[AssetInfo]) -> tuple[tuple[str, int], ...]:
     counts = Counter(asset.asset_type for asset in assets)
     return tuple(sorted(counts.items(), key=lambda item: (-item[1], item[0].casefold())))
+
+
+def _referenceSortValue(reference: AssetReference, column: int) -> str | int:
+    values: tuple[str | int, ...] = (
+        reference.path_id if reference.path_id is not None else -1,
+        reference.asset_type or "",
+        reference.asset_name or reference.asset_path or reference.external or "",
+        reference.relationship or "",
+    )
+    return values[column]
 
 
 def _bundleText(info: BundleInfo) -> str:

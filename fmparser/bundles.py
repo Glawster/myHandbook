@@ -58,7 +58,9 @@ class UnityPyBundleReader(BundleReader):
         self._bundle_info: BundleInfo | None = None
         self._assets: tuple[AssetInfo, ...] = ()
         self._objects_by_id: dict[int, Any] = {}
+        self._assets_by_id: dict[int, AssetInfo] = {}
         self._serialized_search_text: dict[int, str] = {}
+        self._references_by_id: dict[int, tuple[AssetReference, ...]] = {}
 
     def open(self, path: Path) -> BundleInfo:
         bundle_path = path.expanduser().resolve()
@@ -81,6 +83,7 @@ class UnityPyBundleReader(BundleReader):
         self._environment = environment
         self._path = bundle_path
         self._serialized_search_text = {}
+        self._references_by_id = {}
         self._objects_by_id = {
             int(getattr(item, "path_id", 0)): item
             for item in getattr(environment, "objects", [])
@@ -91,6 +94,7 @@ class UnityPyBundleReader(BundleReader):
             self._assetInfo(bundle_path, item, container_paths.get(int(getattr(item, "path_id", 0))))
             for item in getattr(environment, "objects", [])
         )
+        self._assets_by_id = {asset.path_id: asset for asset in self._assets}
 
         info = BundleInfo(
             path=bundle_path,
@@ -213,6 +217,23 @@ class UnityPyBundleReader(BundleReader):
         self._serialized_search_text[asset_id] = search_text
         return search_text
 
+    def assetReferences(self, asset_id: int) -> tuple[AssetReference, ...]:
+        """Return cached references from one asset to other known assets."""
+
+        self._requireOpen()
+        if asset_id in self._references_by_id:
+            return self._references_by_id[asset_id]
+
+        self._assetById(asset_id)
+        unity_object = self._objects_by_id.get(asset_id)
+        if unity_object is None:
+            raise BundleAssetError(f"Asset not found: {asset_id}")
+
+        refs = _referencesFromStructure(self._typeTree(unity_object))
+        enriched = tuple(_referenceEnrich(ref, self._assets_by_id) for ref in refs)
+        self._references_by_id[asset_id] = enriched
+        return enriched
+
     def _requireOpen(self) -> None:
         if self._environment is None or self._path is None:
             raise BundleError("No bundle is open.")
@@ -304,6 +325,63 @@ def _configureTypeTreeHelper() -> None:
     except Exception:  # noqa: BLE001 - UnityPy may be absent until open() reports dependency errors.
         return
     TypeTreeHelper.read_typetree_boost = False
+
+
+def _referencesFromStructure(structure: Any) -> tuple[AssetReference, ...]:
+    refs: list[AssetReference] = []
+    _referencesCollect(structure, "", refs)
+    deduped: dict[tuple[int | None, str | None], AssetReference] = {}
+    for ref in refs:
+        key = (ref.path_id, ref.relationship)
+        deduped.setdefault(key, ref)
+    return tuple(deduped.values())
+
+
+def _referencesCollect(value: Any, relationship: str, refs: list[AssetReference]) -> None:
+    if isinstance(value, dict):
+        path_id = _pathIdFromMapping(value)
+        if path_id not in (None, 0):
+            refs.append(AssetReference(path_id=path_id, relationship=relationship or None))
+            return
+        for key, child in value.items():
+            child_relationship = f"{relationship}.{key}" if relationship else str(key)
+            _referencesCollect(child, child_relationship, refs)
+    elif isinstance(value, (list, tuple)):
+        for index, child in enumerate(value):
+            child_relationship = f"{relationship}[{index}]" if relationship else f"[{index}]"
+            _referencesCollect(child, child_relationship, refs)
+
+
+def _pathIdFromMapping(value: dict[Any, Any]) -> int | None:
+    for key in ("m_PathID", "path_id", "PathID", "pathID"):
+        candidate = value.get(key)
+        if isinstance(candidate, int):
+            return candidate
+        if isinstance(candidate, str):
+            try:
+                return int(candidate)
+            except ValueError:
+                return None
+    return None
+
+
+def _referenceEnrich(
+    reference: AssetReference,
+    assets_by_id: dict[int, AssetInfo],
+) -> AssetReference:
+    if reference.path_id is None:
+        return reference
+    asset = assets_by_id.get(reference.path_id)
+    if asset is None:
+        return reference
+    return AssetReference(
+        path_id=reference.path_id,
+        asset_path=asset.container_path,
+        asset_type=asset.asset_type,
+        asset_name=asset.asset_name,
+        relationship=reference.relationship,
+        external=reference.external,
+    )
 
 
 def _objectTypeName(unity_object: Any) -> str:

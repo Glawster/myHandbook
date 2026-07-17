@@ -2,13 +2,18 @@ from pathlib import Path
 
 import pytest
 
-from fmparser.structures import AssetInfo
+from fmparser.structures import AssetInfo, AssetReference
 
 pytest.importorskip("PySide6")
 
 from PySide6.QtCore import QCoreApplication, Qt  # noqa: E402
 
-from fmparser.qtBundleExplorer import AssetFilterProxyModel, AssetTableModel, _typeCounts  # noqa: E402
+from fmparser.qtBundleExplorer import (  # noqa: E402
+    AssetFilterProxyModel,
+    AssetTableModel,
+    ReferenceTableModel,
+    _typeCounts,
+)
 
 
 def _applicationCreate() -> QCoreApplication:
@@ -82,3 +87,23 @@ def testTypeCountsSortsByCountThenType() -> None:
     )
 
     assert _typeCounts(assets) == (("VisualTreeAsset", 2), ("Texture2D", 1))
+
+
+def testReferenceTableModelExposesReferences() -> None:
+    _applicationCreate()
+    model = ReferenceTableModel(
+        (
+            AssetReference(
+                path_id=42,
+                asset_type="VisualTreeAsset",
+                asset_name="LatestScores",
+                relationship="m_VisualTree",
+            ),
+        )
+    )
+
+    assert model.rowCount() == 1
+    assert model.columnCount() == 4
+    assert model.headerData(2, Qt.Orientation.Horizontal) == "Name"
+    assert model.data(model.index(0, 0)) == 42
+    assert model.data(model.index(0, 2)) == "LatestScores"

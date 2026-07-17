@@ -107,6 +107,8 @@ class AssetReference:
     path_id: int | None = None
     asset_path: str | None = None
     asset_type: str | None = None
+    asset_name: str | None = None
+    relationship: str | None = None
     external: str | None = None
 
 

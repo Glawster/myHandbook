@@ -8,22 +8,33 @@ from fmparser.bundles import BundleFormatError, UnityPyBundleReader
 
 
 class _Type:
-    name = "TextAsset"
+    def __init__(self, name: str) -> None:
+        self.name = name
 
 
 class _Object:
-    path_id = 123
-    type = _Type()
     byte_size = 42
 
+    def __init__(
+        self,
+        path_id: int = 123,
+        name: str = "hello",
+        asset_type: str = "TextAsset",
+        structure: dict[str, object] | None = None,
+    ) -> None:
+        self.path_id = path_id
+        self.type = _Type(asset_type)
+        self._name = name
+        self._structure = structure or {"m_Name": name}
+
     def peek_name(self) -> str:
-        return "hello"
+        return self._name
 
     def read(self) -> SimpleNamespace:
         return SimpleNamespace(name="hello", script=b"hello world")
 
-    def read_typetree(self) -> dict[str, str]:
-        return {"m_Name": "hello"}
+    def read_typetree(self) -> dict[str, object]:
+        return self._structure
 
 
 def testBundleReaderValidatesMissingPath(tmp_path: Path) -> None:
@@ -50,9 +61,10 @@ def testBundleReaderConvertsAdapterErrors(tmp_path: Path, monkeypatch) -> None: 
 def testBundleReaderListsAndReadsAssets(tmp_path: Path, monkeypatch) -> None:  # type: ignore[no-untyped-def]
     sample = tmp_path / "sample.bundle"
     sample.write_bytes(b"UnityFS\x00")
-    unity_object = _Object()
+    unity_object = _Object(structure={"m_Name": "hello", "target": {"m_PathID": 456}})
+    target_object = _Object(path_id=456, name="target", asset_type="VisualTreeAsset")
     environment = SimpleNamespace(
-        objects=[unity_object],
+        objects=[unity_object, target_object],
         container={"assets/ui/hello.txt": unity_object},
         unity_version="6000.0",
         files=[],
@@ -64,9 +76,10 @@ def testBundleReaderListsAndReadsAssets(tmp_path: Path, monkeypatch) -> None:  #
     assets = reader.assetsList()
     data = reader.assetRead(123)
     search_text = reader.assetSearchText(123)
+    references = reader.assetReferences(123)
 
     assert info.signature == "UnityFS"
-    assert info.asset_count == 1
+    assert info.asset_count == 2
     assert info.unity_version == "6000.0"
     assert assets[0].path_id == 123
     assert assets[0].asset_name == "hello"
@@ -75,3 +88,7 @@ def testBundleReaderListsAndReadsAssets(tmp_path: Path, monkeypatch) -> None:  #
     assert data.representation == "original-or-serialized-text"
     assert "hello world" in search_text
     assert "m_name" in search_text
+    assert references[0].path_id == 456
+    assert references[0].asset_name == "target"
+    assert references[0].asset_type == "VisualTreeAsset"
+    assert references[0].relationship == "target"
