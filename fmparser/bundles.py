@@ -272,6 +272,30 @@ class UnityPyBundleReader(BundleReader):
             return ()
         return self._reverse_references_by_id.get(asset_id, ())
 
+    def assetGraph(self, asset_id: int) -> dict[str, Any]:
+        """Return a read-only graph around the selected asset."""
+
+        self.referencesBuild()
+        asset = self._assetById(asset_id)
+        return {
+            "asset": _assetGraphNode(asset),
+            "references": tuple(_referenceGraphNode(ref) for ref in self.assetReferences(asset_id)),
+            "referenced_by": tuple(
+                _referenceGraphNode(ref) for ref in self.reverseReferences(asset_id)
+            ),
+        }
+
+    def assetGraphText(self, asset_id: int, format_name: str) -> str:
+        """Serialize the selected asset graph as JSON or Graphviz DOT."""
+
+        graph = self.assetGraph(asset_id)
+        normalized = format_name.casefold()
+        if normalized == "json":
+            return json.dumps(graph, indent=2, sort_keys=True, default=str) + "\n"
+        if normalized == "dot":
+            return _graphDot(graph)
+        raise BundleAssetError(f"Unsupported graph export format: {format_name}")
+
     def _requireOpen(self) -> None:
         if self._environment is None or self._path is None:
             raise BundleError("No bundle is open.")
@@ -420,6 +444,63 @@ def _referenceEnrich(
         relationship=reference.relationship,
         external=reference.external,
     )
+
+
+def _assetGraphNode(asset: AssetInfo) -> dict[str, Any]:
+    return {
+        "path_id": asset.path_id,
+        "type": asset.asset_type,
+        "name": asset.asset_name,
+        "container": asset.container_path,
+        "serialized_size": asset.serialized_size,
+    }
+
+
+def _referenceGraphNode(reference: AssetReference) -> dict[str, Any]:
+    return {
+        "path_id": reference.path_id,
+        "type": reference.asset_type,
+        "name": reference.asset_name,
+        "container": reference.asset_path,
+        "relationship": reference.relationship,
+        "external": reference.external,
+    }
+
+
+def _graphDot(graph: dict[str, Any]) -> str:
+    asset = graph["asset"]
+    selected_id = str(asset["path_id"])
+    lines = ["digraph asset_graph {", "  rankdir=LR;"]
+    lines.append(f'  "{_dotEscape(selected_id)}" [label="{_dotEscape(_graphLabel(asset))}"];')
+    for reference in graph["references"]:
+        target_id = str(reference["path_id"])
+        lines.append(
+            f'  "{_dotEscape(target_id)}" [label="{_dotEscape(_graphLabel(reference))}"];'
+        )
+        lines.append(
+            f'  "{_dotEscape(selected_id)}" -> "{_dotEscape(target_id)}"'
+            f' [label="{_dotEscape(reference.get("relationship") or "")}"];'
+        )
+    for reference in graph["referenced_by"]:
+        source_id = str(reference["path_id"])
+        lines.append(
+            f'  "{_dotEscape(source_id)}" [label="{_dotEscape(_graphLabel(reference))}"];'
+        )
+        lines.append(
+            f'  "{_dotEscape(source_id)}" -> "{_dotEscape(selected_id)}"'
+            f' [label="{_dotEscape(reference.get("relationship") or "")}"];'
+        )
+    lines.append("}")
+    return "\n".join(lines) + "\n"
+
+
+def _graphLabel(node: dict[str, Any]) -> str:
+    name = node.get("name") or "(unnamed)"
+    return f"{name}\\n{node.get('type') or 'unknown'}\\n{node.get('path_id')}"
+
+
+def _dotEscape(value: str) -> str:
+    return value.replace("\\", "\\\\").replace('"', '\\"')
 
 
 def _objectTypeName(unity_object: Any) -> str:

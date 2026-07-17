@@ -447,6 +447,10 @@ class BundleExplorerWindow(QMainWindow):
         copy_action.triggered.connect(self._metadataCopy)
         toolbar.addAction(copy_action)
 
+        export_graph_action = QAction("Export Graph", self)
+        export_graph_action.triggered.connect(self._graphExport)
+        toolbar.addAction(export_graph_action)
+
     def _layoutBuild(self) -> None:
         filters = QHBoxLayout()
         filters.addWidget(QLabel("Search"))
@@ -555,6 +559,26 @@ class BundleExplorerWindow(QMainWindow):
     def _metadataCopy(self) -> None:
         QApplication.clipboard().setText(self._metadata.toPlainText())
         self.statusBar().showMessage("Metadata copied", 2500)
+
+    def _graphExport(self) -> None:
+        if self._reader is None or self._selected_asset_id is None:
+            QMessageBox.information(self, "Bundle Explorer", "Select an asset before exporting a graph.")
+            return
+        file_name, selected_filter = QFileDialog.getSaveFileName(
+            self,
+            "Export Asset Graph",
+            "",
+            "JSON graph (*.json);;Graphviz DOT (*.dot)",
+        )
+        if not file_name:
+            return
+        path = Path(file_name)
+        format_name = "dot" if "DOT" in selected_filter or path.suffix.casefold() == ".dot" else "json"
+        if not path.suffix:
+            path = path.with_suffix(f".{format_name}")
+        text = self._reader.assetGraphText(self._selected_asset_id, format_name)
+        path.write_text(text, encoding="utf-8")
+        self.statusBar().showMessage(f"Exported graph to {path}", 2500)
 
     def _bundleOpened(
         self,

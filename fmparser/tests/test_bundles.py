@@ -1,3 +1,4 @@
+import json
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -79,6 +80,8 @@ def testBundleReaderListsAndReadsAssets(tmp_path: Path, monkeypatch) -> None:  #
     references = reader.assetReferences(123)
     reader.referencesBuild()
     reverse_references = reader.reverseReferences(456)
+    graph_json = json.loads(reader.assetGraphText(123, "json"))
+    graph_dot = reader.assetGraphText(123, "dot")
 
     assert info.signature == "UnityFS"
     assert info.asset_count == 2
@@ -97,3 +100,6 @@ def testBundleReaderListsAndReadsAssets(tmp_path: Path, monkeypatch) -> None:  #
     assert reverse_references[0].path_id == 123
     assert reverse_references[0].asset_name == "hello"
     assert reverse_references[0].relationship == "target"
+    assert graph_json["asset"]["path_id"] == 123
+    assert graph_json["references"][0]["path_id"] == 456
+    assert '"123" -> "456"' in graph_dot
