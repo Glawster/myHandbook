@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sys
 import traceback
+from collections import Counter
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
@@ -32,6 +33,8 @@ try:
         QHBoxLayout,
         QLabel,
         QLineEdit,
+        QListWidget,
+        QListWidgetItem,
         QMainWindow,
         QMessageBox,
         QPlainTextEdit,
@@ -203,6 +206,9 @@ class BundleExplorerWindow(QMainWindow):
         self._type_filter = QLineEdit()
         self._type_filter.setPlaceholderText("Type filter")
         self._type_filter.textChanged.connect(self._filtersChanged)
+        self._type_summary = QListWidget()
+        self._type_summary.setMaximumHeight(130)
+        self._type_summary.itemClicked.connect(self._typeSummaryClicked)
 
         self._metadata = QPlainTextEdit()
         self._metadata.setReadOnly(True)
@@ -228,6 +234,7 @@ class BundleExplorerWindow(QMainWindow):
         self._reader = None
         self._bundle_path = None
         self._model.assetsSet(())
+        self._typeSummarySet(())
         self._metadata.clear()
         self._preview.clear()
         self.statusBar().showMessage("Bundle closed")
@@ -264,6 +271,7 @@ class BundleExplorerWindow(QMainWindow):
         left = QWidget()
         left_layout = QVBoxLayout(left)
         left_layout.addLayout(filters)
+        left_layout.addWidget(self._type_summary)
         left_layout.addWidget(self._table)
 
         right = QSplitter(Qt.Orientation.Vertical)
@@ -307,6 +315,10 @@ class BundleExplorerWindow(QMainWindow):
     def _filtersChanged(self) -> None:
         self._proxy.filtersSet(text=self._filter.text(), asset_type=self._type_filter.text())
 
+    def _typeSummaryClicked(self, item: QListWidgetItem) -> None:
+        asset_type = item.data(Qt.ItemDataRole.UserRole)
+        self._type_filter.setText(str(asset_type or ""))
+
     def _assetSelected(self, current: QModelIndex, previous: QModelIndex) -> None:
         del previous
         if self._reader is None or not current.isValid():
@@ -336,6 +348,7 @@ class BundleExplorerWindow(QMainWindow):
         self._bundle_path = info.path
         self._settings.setValue("last_bundle_dir", str(info.path.parent))
         self._model.assetsSet(assets)
+        self._typeSummarySet(assets)
         self._metadata.setPlainText(_bundleText(info))
         self._preview.clear()
         self._log.appendPlainText(f"Opened {info.file_name}: {info.asset_count} assets")
@@ -358,6 +371,13 @@ class BundleExplorerWindow(QMainWindow):
         self.statusBar().showMessage(message)
         self._log.appendPlainText(message)
 
+    def _typeSummarySet(self, assets: Sequence[AssetInfo]) -> None:
+        self._type_summary.clear()
+        for asset_type, count in _typeCounts(assets):
+            item = QListWidgetItem(f"{asset_type:<24} {count}")
+            item.setData(Qt.ItemDataRole.UserRole, asset_type)
+            self._type_summary.addItem(item)
+
 
 def main(argv: list[str] | None = None) -> int:
     app = QApplication.instance() or QApplication(sys.argv[:1])
@@ -379,6 +399,11 @@ def _sortValue(asset: AssetInfo, column: int) -> str | int:
         len(asset.dependencies) + len(asset.external_references),
     )
     return values[column]
+
+
+def _typeCounts(assets: Sequence[AssetInfo]) -> tuple[tuple[str, int], ...]:
+    counts = Counter(asset.asset_type for asset in assets)
+    return tuple(sorted(counts.items(), key=lambda item: (-item[1], item[0].casefold())))
 
 
 def _bundleText(info: BundleInfo) -> str:

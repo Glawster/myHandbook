@@ -8,7 +8,7 @@ pytest.importorskip("PySide6")
 
 from PySide6.QtCore import QCoreApplication, Qt  # noqa: E402
 
-from fmparser.qtBundleExplorer import AssetFilterProxyModel, AssetTableModel  # noqa: E402
+from fmparser.qtBundleExplorer import AssetFilterProxyModel, AssetTableModel, _typeCounts  # noqa: E402
 
 
 def _applicationCreate() -> QCoreApplication:
@@ -54,3 +54,13 @@ def testAssetFilterProxyFiltersAssets() -> None:
 
     assert proxy.rowCount() == 1
     assert proxy.data(proxy.index(0, 1)) == "PlayerPanel"
+
+
+def testTypeCountsSortsByCountThenType() -> None:
+    assets = (
+        _assetCreate(1, "PlayerPanel", "VisualTreeAsset"),
+        _assetCreate(2, "PlayerIcon", "Texture2D"),
+        _assetCreate(3, "Scores", "VisualTreeAsset"),
+    )
+
+    assert _typeCounts(assets) == (("VisualTreeAsset", 2), ("Texture2D", 1))
