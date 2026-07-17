@@ -51,6 +51,9 @@ class UnityPyBundleReader(BundleReader):
     """UnityPy-backed implementation of :class:`BundleReader`."""
 
     def __init__(self) -> None:
+        from UnityPy.helpers import TypeTreeHelper
+        TypeTreeHelper.read_typetree_boost = False
+
         self._environment: Any | None = None
         self._path: Path | None = None
         self._bundle_info: BundleInfo | None = None
@@ -201,13 +204,15 @@ class UnityPyBundleReader(BundleReader):
             external_references=self._externalReferences(self._environment),
         )
 
-    def _assetName(self, unity_object: Any) -> str | None:
+    def _assetName(self, obj) -> str:
         try:
-            data = unity_object.read()
-        except Exception:  # noqa: BLE001 - name discovery is best effort.
-            return None
-        name = getattr(data, "name", None) or getattr(data, "m_Name", None)
-        return str(name) if name else None
+            name = obj.peek_name()
+            if name:
+                return str(name)
+        except Exception:
+            pass
+
+        return ""
 
     def _typeTree(self, unity_object: Any) -> dict[str, Any]:
         try:
