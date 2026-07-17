@@ -12,6 +12,7 @@ from fmparser.qtBundleExplorer import (  # noqa: E402
     AssetFilterProxyModel,
     AssetTableModel,
     ReferenceTableModel,
+    _ReferencesSignals,
     _typeCounts,
 )
 
@@ -107,3 +108,15 @@ def testReferenceTableModelExposesReferences() -> None:
     assert model.headerData(2, Qt.Orientation.Horizontal) == "Name"
     assert model.data(model.index(0, 0)) == 42
     assert model.data(model.index(0, 2)) == "LatestScores"
+
+
+def testReferencesSignalAcceptsLargeUnityPathIds() -> None:
+    _applicationCreate()
+    signals = _ReferencesSignals()
+    emitted: list[tuple[int, int, object]] = []
+    large_path_id = 8889112869717200915
+
+    signals.finished.connect(lambda generation, asset_id, refs: emitted.append((generation, asset_id, refs)))
+    signals.finished.emit(1, large_path_id, ())
+
+    assert emitted == [(1, large_path_id, ())]

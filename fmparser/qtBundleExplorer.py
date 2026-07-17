@@ -279,7 +279,7 @@ class _DeepSearchWorker(QRunnable):
 
 
 class _ReferencesSignals(QObject):
-    finished = Signal(int, int, object)
+    finished = Signal(int, object, object)
     failed = Signal(str, str)
 
 
