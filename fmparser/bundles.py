@@ -51,14 +51,14 @@ class UnityPyBundleReader(BundleReader):
     """UnityPy-backed implementation of :class:`BundleReader`."""
 
     def __init__(self) -> None:
-        from UnityPy.helpers import TypeTreeHelper
-        TypeTreeHelper.read_typetree_boost = False
+        _configureTypeTreeHelper()
 
         self._environment: Any | None = None
         self._path: Path | None = None
         self._bundle_info: BundleInfo | None = None
         self._assets: tuple[AssetInfo, ...] = ()
         self._objects_by_id: dict[int, Any] = {}
+        self._serialized_search_text: dict[int, str] = {}
 
     def open(self, path: Path) -> BundleInfo:
         bundle_path = path.expanduser().resolve()
@@ -80,6 +80,7 @@ class UnityPyBundleReader(BundleReader):
 
         self._environment = environment
         self._path = bundle_path
+        self._serialized_search_text = {}
         self._objects_by_id = {
             int(getattr(item, "path_id", 0)): item
             for item in getattr(environment, "objects", [])
@@ -179,6 +180,39 @@ class UnityPyBundleReader(BundleReader):
         target.write_text(data.text, encoding="utf-8")
         return target
 
+    def assetSearchText(self, asset_id: int) -> str:
+        """Return cached searchable serialized text for one asset."""
+
+        self._requireOpen()
+        if asset_id in self._serialized_search_text:
+            return self._serialized_search_text[asset_id]
+
+        asset = self._assetById(asset_id)
+        unity_object = self._objects_by_id.get(asset_id)
+        if unity_object is None:
+            raise BundleAssetError(f"Asset not found: {asset_id}")
+
+        parts = [
+            str(asset.path_id),
+            asset.asset_name or "",
+            asset.asset_type,
+            asset.container_path or "",
+        ]
+        structure = self._typeTree(unity_object)
+        if structure:
+            parts.append(json.dumps(structure, sort_keys=True, default=str))
+        if asset.asset_type == "TextAsset":
+            try:
+                text = _textAssetContent(unity_object.read())
+            except Exception:  # noqa: BLE001 - deep search remains best effort.
+                text = None
+            if text:
+                parts.append(text)
+
+        search_text = "\n".join(part for part in parts if part).casefold()
+        self._serialized_search_text[asset_id] = search_text
+        return search_text
+
     def _requireOpen(self) -> None:
         if self._environment is None or self._path is None:
             raise BundleError("No bundle is open.")
@@ -262,6 +296,14 @@ def _bundleSignature(path: Path) -> str:
     if data.startswith((b"UnityFS", b"UnityWeb", b"UnityRaw")):
         return data.split(b"\x00", 1)[0].decode("ascii", errors="replace")
     return data[:8].hex(" ")
+
+
+def _configureTypeTreeHelper() -> None:
+    try:
+        from UnityPy.helpers import TypeTreeHelper
+    except Exception:  # noqa: BLE001 - UnityPy may be absent until open() reports dependency errors.
+        return
+    TypeTreeHelper.read_typetree_boost = False
 
 
 def _objectTypeName(unity_object: Any) -> str:

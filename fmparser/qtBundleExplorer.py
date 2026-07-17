@@ -113,10 +113,18 @@ class AssetFilterProxyModel(QSortFilterProxyModel):
         super().__init__()
         self._text = ""
         self._asset_type = ""
+        self._serialized_text_by_id: dict[int, str] = {}
 
     def filtersSet(self, *, text: str, asset_type: str) -> None:
         self._text = text
         self._asset_type = asset_type
+        self._invalidate()
+
+    def serializedSearchTextSet(self, values: dict[int, str]) -> None:
+        self._serialized_text_by_id = dict(values)
+        self._invalidate()
+
+    def _invalidate(self) -> None:
         if hasattr(self, "invalidate"):
             self.invalidate()
         else:  # pragma: no cover - compatibility with older PySide6 releases.
@@ -129,7 +137,14 @@ class AssetFilterProxyModel(QSortFilterProxyModel):
         asset = model.assetAt(source_row)
         if asset is None:
             return False
-        return bool(assetsFilter((asset,), text=self._text, asset_type=self._asset_type))
+        if not assetsFilter((asset,), text="", asset_type=self._asset_type):
+            return False
+        query = self._text.strip().casefold()
+        if not query:
+            return True
+        if assetsFilter((asset,), text=self._text, asset_type=""):
+            return True
+        return query in self._serialized_text_by_id.get(asset.path_id, "")
 
 
 class _OpenSignals(QObject):
@@ -177,6 +192,37 @@ class _PreviewWorker(QRunnable):
         self.signals.finished.emit(data)
 
 
+class _DeepSearchSignals(QObject):
+    finished = Signal(int, object)
+    failed = Signal(str, str)
+
+
+class _DeepSearchWorker(QRunnable):
+    def __init__(
+        self,
+        reader: UnityPyBundleReader,
+        assets: Sequence[AssetInfo],
+        generation: int,
+    ) -> None:
+        super().__init__()
+        self.reader = reader
+        self.assets = tuple(assets)
+        self.generation = generation
+        self.signals = _DeepSearchSignals()
+
+    @Slot()
+    def run(self) -> None:
+        try:
+            values = {
+                asset.path_id: self.reader.assetSearchText(asset.path_id)
+                for asset in self.assets
+            }
+        except Exception as error:  # noqa: BLE001 - send readable dialog plus log detail.
+            self.signals.failed.emit(str(error), traceback.format_exc())
+            return
+        self.signals.finished.emit(self.generation, values)
+
+
 class BundleExplorerWindow(QMainWindow):
     """Initial read-only bundle explorer window."""
 
@@ -187,6 +233,9 @@ class BundleExplorerWindow(QMainWindow):
         self._thread_pool = QThreadPool.globalInstance()
         self._reader: UnityPyBundleReader | None = None
         self._bundle_path: Path | None = None
+        self._assets: tuple[AssetInfo, ...] = ()
+        self._deep_search_generation = 0
+        self._deep_search_running = False
 
         self._model = AssetTableModel()
         self._proxy = AssetFilterProxyModel()
@@ -233,7 +282,11 @@ class BundleExplorerWindow(QMainWindow):
     def bundleClose(self) -> None:
         self._reader = None
         self._bundle_path = None
+        self._assets = ()
+        self._deep_search_generation += 1
+        self._deep_search_running = False
         self._model.assetsSet(())
+        self._proxy.serializedSearchTextSet({})
         self._typeSummarySet(())
         self._metadata.clear()
         self._preview.clear()
@@ -314,6 +367,7 @@ class BundleExplorerWindow(QMainWindow):
 
     def _filtersChanged(self) -> None:
         self._proxy.filtersSet(text=self._filter.text(), asset_type=self._type_filter.text())
+        self._deepSearchMaybeStart()
 
     def _typeSummaryClicked(self, item: QListWidgetItem) -> None:
         asset_type = item.data(Qt.ItemDataRole.UserRole)
@@ -346,8 +400,12 @@ class BundleExplorerWindow(QMainWindow):
     ) -> None:
         self._reader = reader
         self._bundle_path = info.path
+        self._assets = assets
+        self._deep_search_generation += 1
+        self._deep_search_running = False
         self._settings.setValue("last_bundle_dir", str(info.path.parent))
         self._model.assetsSet(assets)
+        self._proxy.serializedSearchTextSet({})
         self._typeSummarySet(assets)
         self._metadata.setPlainText(_bundleText(info))
         self._preview.clear()
@@ -370,6 +428,24 @@ class BundleExplorerWindow(QMainWindow):
     def _busySet(self, message: str) -> None:
         self.statusBar().showMessage(message)
         self._log.appendPlainText(message)
+
+    def _deepSearchMaybeStart(self) -> None:
+        if self._reader is None or self._deep_search_running or not self._filter.text().strip():
+            return
+        self._deep_search_running = True
+        generation = self._deep_search_generation
+        worker = _DeepSearchWorker(self._reader, self._assets, generation)
+        worker.signals.finished.connect(self._deepSearchReady)
+        worker.signals.failed.connect(self._workerFailed)
+        self._thread_pool.start(worker)
+        self.statusBar().showMessage("Building serialized search cache...")
+
+    def _deepSearchReady(self, generation: int, values: dict[int, str]) -> None:
+        if generation != self._deep_search_generation:
+            return
+        self._deep_search_running = False
+        self._proxy.serializedSearchTextSet(values)
+        self.statusBar().showMessage("Serialized search cache ready", 2500)
 
     def _typeSummarySet(self, assets: Sequence[AssetInfo]) -> None:
         self._type_summary.clear()

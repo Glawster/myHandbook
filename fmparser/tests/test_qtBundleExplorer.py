@@ -56,6 +56,24 @@ def testAssetFilterProxyFiltersAssets() -> None:
     assert proxy.data(proxy.index(0, 1)) == "PlayerPanel"
 
 
+def testAssetFilterProxyFiltersSerializedSearchText() -> None:
+    _applicationCreate()
+    model = AssetTableModel(
+        (
+            _assetCreate(1, "Panel", "VisualTreeAsset"),
+            _assetCreate(2, "PlayerIcon", "Texture2D"),
+        )
+    )
+    proxy = AssetFilterProxyModel()
+    proxy.setSourceModel(model)
+    proxy.serializedSearchTextSet({1: '{"m_name": "latest scores"}'})
+
+    proxy.filtersSet(text="Latest Scores", asset_type="")
+
+    assert proxy.rowCount() == 1
+    assert proxy.data(proxy.index(0, 1)) == "Panel"
+
+
 def testTypeCountsSortsByCountThenType() -> None:
     assets = (
         _assetCreate(1, "PlayerPanel", "VisualTreeAsset"),

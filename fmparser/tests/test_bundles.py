@@ -16,6 +16,9 @@ class _Object:
     type = _Type()
     byte_size = 42
 
+    def peek_name(self) -> str:
+        return "hello"
+
     def read(self) -> SimpleNamespace:
         return SimpleNamespace(name="hello", script=b"hello world")
 
@@ -60,6 +63,7 @@ def testBundleReaderListsAndReadsAssets(tmp_path: Path, monkeypatch) -> None:  #
     info = reader.open(sample)
     assets = reader.assetsList()
     data = reader.assetRead(123)
+    search_text = reader.assetSearchText(123)
 
     assert info.signature == "UnityFS"
     assert info.asset_count == 1
@@ -69,3 +73,5 @@ def testBundleReaderListsAndReadsAssets(tmp_path: Path, monkeypatch) -> None:  #
     assert assets[0].container_path == "assets/ui/hello.txt"
     assert data.text == "hello world"
     assert data.representation == "original-or-serialized-text"
+    assert "hello world" in search_text
+    assert "m_name" in search_text
