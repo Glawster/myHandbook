@@ -1,0 +1,35 @@
+development_priorities:
+  critical:
+    Stamina:
+      current: 8
+      target: 11
+      reason: >
+        Required for repeated pressing, recovery runs and maintaining
+        attacking intensity across the match.
+
+  important:
+    Decisions:
+      current: 10
+      target: 12
+      reason: >
+        Improves the choices made after beating an opponent or receiving
+        the ball in transition.
+
+    FirstTouch:
+      current: 10
+      target: 11
+      reason: >
+        Supports high-tempo possession and clean control while moving quickly.
+
+  useful:
+    Balance:
+      current: 8
+      target: 10
+      reason: >
+        Helps the player remain effective when challenged during high-speed dribbles.
+
+    Passing:
+      current: 9
+      target: 10
+      reason: >
+        Improves combinations with the wing-back, attacking midfielder and striker.
