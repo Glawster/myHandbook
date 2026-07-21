@@ -11,6 +11,7 @@ The aim is not to create formal publications. The aim is to keep practical docum
 - [Reverse Engineering Notes](documentation/reverseEngineering.md)
 - [FM26 Skin Bundle Explorer](documentation/skinBundleExplorer.md)
 - [FMParser Core Architecture](documentation/fmparserArchitecture.md)
+- [FMParser Automation Framework](documentation/automationFramework.md)
 - [Reverse Engineering Notes](documentation/reverseEngineering.md)
 - [Roadmap](documentation/roadmap.md)
 - [Style Guide](documentation/styleGuide.md)

@@ -11,6 +11,7 @@ exports/pdf/*.pdf
 *.bundle
 local-bundles/
 bundle-exports/
+output/
 
 # Linux
 *~

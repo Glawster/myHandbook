@@ -17,7 +17,7 @@ class ScreenshotBackend(Protocol):
 class ScreenshotManager:
     def __init__(
         self,
-        output_dir: str | Path = "screenshots",
+        output_dir: str | Path = "output/screenshots",
         *,
         backend: ScreenshotBackend | None = None,
         logger: logging.Logger | None = None,
