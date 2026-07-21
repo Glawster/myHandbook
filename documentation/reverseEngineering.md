@@ -19,7 +19,7 @@ because they do not yet map to a tactical concept.
 ## Evidence Workflow
 
 1. Create paired sample files where exactly one tactical setting changes.
-2. Run `fmparser diff old.fmf new.fmf`.
+2. Run `fmparser --tactic old.fmf --compare new.fmf`.
 3. Record changed offsets, grouped changes, and whether checksums or compressed blocks also changed.
 4. Repeat until the same offset reliably maps to one setting.
 5. Promote the field to a typed parser structure only after repeatable evidence exists.
