@@ -58,7 +58,7 @@ class TemplateMatcher:
             return None
         return Match(location[0], location[1], width, height, float(score))
 
-    def wait_for(
+    def imageWait(
         self,
         template: str | Path | Image.Image,
         *,
@@ -66,6 +66,7 @@ class TemplateMatcher:
         interval: float = 0.25,
         confidence: float = 0.9,
     ) -> Match:
+        """Wait until a template appears or the timeout expires."""
         if timeout < 0 or interval <= 0:
             raise ValueError("timeout must be non-negative and interval must be positive")
         deadline = self.clock() + timeout

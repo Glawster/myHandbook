@@ -43,25 +43,27 @@ class Recorder(QObject):
             self.action_recorded.emit(action)
             self.logger.debug("Recorded %s action", action.kind)
 
-    def save_yaml(self, path: str | Path) -> Path:
+    def yamlSave(self, path: str | Path) -> Path:
+        """Save recorded actions to a YAML file."""
         destination = Path(path)
         destination.parent.mkdir(parents=True, exist_ok=True)
         with destination.open("w", encoding="utf-8") as stream:
             yaml.safe_dump(
-                {"actions": [action.to_dict() for action in self.actions]},
+                {"actions": [action.dictionaryCreate() for action in self.actions]},
                 stream,
                 sort_keys=False,
             )
         return destination
 
     @classmethod
-    def from_yaml(cls, path: str | Path) -> Recorder:
+    def yamlLoad(cls, path: str | Path) -> Recorder:
+        """Load and validate recorded actions from a YAML file."""
         with Path(path).open(encoding="utf-8") as stream:
             data = yaml.safe_load(stream) or {}
         if not isinstance(data, Mapping) or not isinstance(data.get("actions", []), list):
             raise ValueError("Recording YAML must contain an actions list")
         recorder = cls()
-        recorder.actions = [Action.from_dict(value) for value in data.get("actions", [])]
+        recorder.actions = [Action.dictionaryLoad(value) for value in data.get("actions", [])]
         return recorder
 
     def replay(self, navigator: Navigator) -> None:

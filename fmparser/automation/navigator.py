@@ -10,7 +10,7 @@ from fmparser.automation.action import Action
 from fmparser.automation.recorder import Recorder
 from fmparser.automation.screen_map import ScreenMap
 from fmparser.automation.screenshot import ScreenshotManager
-from fmparser.automation.template_matcher import Match, TemplateMatcher
+from fmparser.automation.templateMatcher import Match, TemplateMatcher
 
 
 class InputBackend(Protocol):
@@ -62,7 +62,7 @@ class Navigator:
         self.logger.info("Pressed shortcut %s", "+".join(keys))
         self._record(Action("shortcut", parameters={"keys": list(keys)}), record)
 
-    def wait_for_image(
+    def imageWait(
         self,
         template: str | Path,
         *,
@@ -71,7 +71,8 @@ class Navigator:
         confidence: float = 0.9,
         record: bool = True,
     ) -> Match:
-        match = self.matcher.wait_for(
+        """Wait for an image and optionally record the action."""
+        match = self.matcher.imageWait(
             template, timeout=timeout, interval=interval, confidence=confidence
         )
         self._record(
@@ -98,7 +99,7 @@ class Navigator:
         if action.kind == "shortcut":
             return self.shortcut(*params.pop("keys", []), record=record, **params)
         if action.kind == "wait_for_image" and action.target:
-            return self.wait_for_image(action.target, record=record, **params)
+            return self.imageWait(action.target, record=record, **params)
         if action.kind == "screenshot":
             return self.capture(record=record, **params)
         raise ValueError(f"Action {action.kind!r} requires a target")

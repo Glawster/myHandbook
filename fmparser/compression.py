@@ -54,7 +54,7 @@ def _decompressors() -> tuple[tuple[str, Decompressor], ...]:
     )
 
 
-def probe_compression(
+def compressionProbe(
     data: bytes,
     *,
     offsets: tuple[int, ...] = (0,),

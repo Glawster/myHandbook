@@ -8,20 +8,21 @@ from pathlib import Path
 
 from organiseMyProjects.logUtils import getLogger, setApplication
 
-thisApplication = "myHandbook"
+thisApplication = Path(__file__).parent.name
 setApplication(thisApplication)
 logger = getLogger(includeConsole=False)
 
 from fmparser.bundleFilter import assetsFilter  # noqa: E402
 from fmparser.bundles import BundleError, UnityPyBundleReader  # noqa: E402
 from fmparser.config import tacticDefaultGet, tacticDefaultSet  # noqa: E402
-from fmparser.diff import diff_files  # noqa: E402
+from fmparser.diff import filesDiff  # noqa: E402
 from fmparser.parser import FMFTactic, FMFParser  # noqa: E402
-from fmparser.report import diff_report, inspection_report  # noqa: E402
+from fmparser.report import diffReport, inspectionReport  # noqa: E402
 from fmparser.structures import AssetData, AssetInfo, BundleInfo  # noqa: E402
 
 
 def buildParser() -> argparse.ArgumentParser:
+    """Build the non-interactive FMParser command-line parser."""
     parser = argparse.ArgumentParser(prog="fmparser")
     parser.add_argument("-v", "--verbose", action="count", default=0)
     parser.add_argument(
@@ -53,6 +54,7 @@ def buildParser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run FMParser and return a process exit status."""
     global logger
 
     parser = buildParser()
@@ -132,12 +134,12 @@ def _tacticActionRun(args: argparse.Namespace) -> int:
         raise ValueError("Choose exactly one tactic action: --inspect, --print, or --compare PATH.")
 
     if args.inspect:
-        print(inspection_report(FMFParser().inspect(tacticPath)), end="")
+        print(inspectionReport(FMFParser().inspect(tacticPath)), end="")
     elif args.print_tactic:
         print(_tacticReport(FMFTactic.read(tacticPath)), end="")
     elif args.compare:
         comparePath = pathValidateFile(args.compare)
-        print(diff_report(tacticPath, comparePath, diff_files(tacticPath, comparePath)), end="")
+        print(diffReport(tacticPath, comparePath, filesDiff(tacticPath, comparePath)), end="")
     logger.done("fmparser command")
     return 0
 

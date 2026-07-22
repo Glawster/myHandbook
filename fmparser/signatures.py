@@ -24,15 +24,17 @@ def entropy(data: bytes) -> float:
     return -sum((count / total) * math.log2(count / total) for count in counts if count)
 
 
-def entropy_windows(data: bytes, window_size: int = 256, step: int | None = None) -> tuple[EntropyWindow, ...]:
+def entropyWindows(
+    data: bytes, windowSize: int = 256, step: int | None = None
+) -> tuple[EntropyWindow, ...]:
     """Scan a file for high-entropy compressed regions and low-entropy tables."""
 
-    if window_size <= 0:
-        raise ValueError("window_size must be positive")
-    step = step or window_size
+    if windowSize <= 0:
+        raise ValueError("windowSize must be positive")
+    step = step or windowSize
     windows: list[EntropyWindow] = []
     for offset in range(0, len(data), step):
-        chunk = data[offset : offset + window_size]
+        chunk = data[offset : offset + windowSize]
         if not chunk:
             continue
         value = entropy(chunk)
@@ -48,7 +50,7 @@ def entropy_windows(data: bytes, window_size: int = 256, step: int | None = None
     return tuple(windows)
 
 
-def header_info(data: bytes) -> HeaderInfo:
+def headerInfo(data: bytes) -> HeaderInfo:
     """Extract low-confidence header information from observed bytes."""
 
     observed_fmf_prefix = bytes.fromhex("02016166652e")
@@ -67,7 +69,7 @@ def header_info(data: bytes) -> HeaderInfo:
     return HeaderInfo(magic_hex=magic.hex(" "), magic_ascii=magic_ascii, version=version, flags=flags)
 
 
-def ascii_strings(data: bytes, minimum: int = 4) -> tuple[ASCIIString, ...]:
+def asciiStrings(data: bytes, minimum: int = 4) -> tuple[ASCIIString, ...]:
     """Find printable ASCII strings with offsets."""
 
     pattern = rb"[\x20-\x7e]{" + str(minimum).encode("ascii") + rb",}"
@@ -79,7 +81,7 @@ def ascii_strings(data: bytes, minimum: int = 4) -> tuple[ASCIIString, ...]:
     return tuple(strings)
 
 
-def section_candidates(data: bytes) -> tuple[SectionCandidate, ...]:
+def sectionCandidates(data: bytes) -> tuple[SectionCandidate, ...]:
     """Return tentative section offsets discovered from simple length-table heuristics."""
 
     candidates: list[SectionCandidate] = []

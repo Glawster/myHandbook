@@ -7,8 +7,8 @@ import hashlib
 import logging
 from pathlib import Path
 
-from fmparser.compression import probe_compression
-from fmparser.signatures import ascii_strings, entropy, entropy_windows, header_info, section_candidates
+from fmparser.compression import compressionProbe
+from fmparser.signatures import asciiStrings, entropy, entropyWindows, headerInfo, sectionCandidates
 from fmparser.structures import FileInspection, PlayerSlot, TacticMetadata
 
 LOGGER = logging.getLogger(__name__)
@@ -43,17 +43,17 @@ class FMFParser:
         file_path = Path(path)
         data = file_path.read_bytes()
         LOGGER.info("inspecting %s (%d bytes)", file_path, len(data))
-        possible_offsets = tuple(sorted({0, *[item.offset for item in section_candidates(data)[:10]]}))
+        possibleOffsets = tuple(sorted({0, *[item.offset for item in sectionCandidates(data)[:10]]}))
         return FileInspection(
             path=file_path,
             size=len(data),
             sha256=hashlib.sha256(data).hexdigest(),
-            header=header_info(data),
+            header=headerInfo(data),
             entropy=entropy(data),
-            entropy_windows=entropy_windows(data),
-            strings=ascii_strings(data),
-            sections=section_candidates(data),
-            compression_attempts=probe_compression(data, offsets=possible_offsets),
+            entropy_windows=entropyWindows(data),
+            strings=asciiStrings(data),
+            sections=sectionCandidates(data),
+            compression_attempts=compressionProbe(data, offsets=possibleOffsets),
         )
 
     def parse(self, path: str | Path) -> FMFTactic:

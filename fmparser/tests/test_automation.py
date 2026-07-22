@@ -41,7 +41,7 @@ def test_screen_map_loads_both_yaml_coordinate_styles(tmp_path: Path) -> None:
     path = tmp_path / "screen.yaml"
     path.write_text("coordinates:\n  menu: {x: 12, y: 34}\n  close: [90, 10]\n", encoding="utf-8")
 
-    screen_map = ScreenMap.from_yaml(path)
+    screen_map = ScreenMap.yamlLoad(path)
 
     assert screen_map.get("menu") == Point(12, 34)
     assert screen_map.get("close") == Point(90, 10)
@@ -57,7 +57,7 @@ def test_screen_map_rejects_invalid_yaml(tmp_path: Path, yaml_text: str) -> None
     path.write_text(yaml_text, encoding="utf-8")
 
     with pytest.raises(ValueError):
-        ScreenMap.from_yaml(path)
+        ScreenMap.yamlLoad(path)
 
 
 def test_navigator_dispatches_input_and_records_actions() -> None:
@@ -84,9 +84,9 @@ def test_recorder_round_trip_and_replay(tmp_path: Path) -> None:
     recorder.record(Action("click", "save", {"clicks": 1, "button": "left"}))
     recorder.record(Action("shortcut", parameters={"keys": ["ctrl", "q"]}))
     recorder.stop()
-    path = recorder.save_yaml(tmp_path / "recording.yaml")
+    path = recorder.yamlSave(tmp_path / "recording.yaml")
 
-    loaded = Recorder.from_yaml(path)
+    loaded = Recorder.yamlLoad(path)
     navigator = Mock()
     loaded.replay(navigator)
 
@@ -130,9 +130,9 @@ def test_template_matcher_times_out() -> None:
     )
 
     with pytest.raises(TimeoutError):
-        matcher.wait_for(template, timeout=1.0, interval=0.25)
+        matcher.imageWait(template, timeout=1.0, interval=0.25)
 
 
 def test_action_rejects_unknown_kind() -> None:
     with pytest.raises(ValueError, match="Unsupported"):
-        Action.from_dict({"kind": "launch"})
+        Action.dictionaryLoad({"kind": "launch"})

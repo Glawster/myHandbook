@@ -7,7 +7,8 @@ from pathlib import Path
 from fmparser.structures import ChangeGroup, FileInspection, RepeatedStructureCandidate
 
 
-def inspection_report(inspection: FileInspection) -> str:
+def inspectionReport(inspection: FileInspection) -> str:
+    """Render a file inspection as a human-readable report."""
     lines = [
         "File",
         "-----",
@@ -58,12 +59,13 @@ def inspection_report(inspection: FileInspection) -> str:
     return "\n".join(lines) + "\n"
 
 
-def diff_report(old_path: Path, new_path: Path, groups: tuple[ChangeGroup, ...]) -> str:
+def diffReport(oldPath: Path, newPath: Path, groups: tuple[ChangeGroup, ...]) -> str:
+    """Render grouped file differences as a human-readable report."""
     lines = [
         "Binary Diff",
         "===========",
-        f"Old: {old_path}",
-        f"New: {new_path}",
+        f"Old: {oldPath}",
+        f"New: {newPath}",
         "",
         "Grouped changes",
         "---------------",
@@ -85,7 +87,8 @@ def diff_report(old_path: Path, new_path: Path, groups: tuple[ChangeGroup, ...])
     return "\n".join(lines) + "\n"
 
 
-def structures_report(candidates: tuple[RepeatedStructureCandidate, ...]) -> str:
+def structuresReport(candidates: tuple[RepeatedStructureCandidate, ...]) -> str:
+    """Render repeated-structure candidates as a report."""
     lines = ["Structure Candidates", "====================", ""]
     if not candidates:
         lines.append("- none detected")

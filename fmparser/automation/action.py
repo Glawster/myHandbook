@@ -17,11 +17,13 @@ class Action:
     target: str | None = None
     parameters: Mapping[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> dict[str, Any]:
+    def dictionaryCreate(self) -> dict[str, Any]:
+        """Serialize this action to a plain dictionary."""
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, value: Mapping[str, Any]) -> Action:
+    def dictionaryLoad(cls, value: Mapping[str, Any]) -> Action:
+        """Create and validate an action from a dictionary."""
         kind = value.get("kind")
         valid = {"move", "click", "shortcut", "wait_for_image", "screenshot"}
         if kind not in valid:

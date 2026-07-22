@@ -74,7 +74,8 @@ class BinaryReader:
         finally:
             self.seek(current)
 
-    def read_bytes(self, length: int) -> bytes:
+    def bytesRead(self, length: int) -> bytes:
+        """Read and advance by the requested number of bytes."""
         if length < 0:
             raise ValueError("length must be non-negative")
         end = self._offset + length
@@ -84,13 +85,14 @@ class BinaryReader:
         self._offset = end
         return chunk
 
-    def peek_bytes(self, length: int) -> bytes:
+    def bytesPeek(self, length: int) -> bytes:
+        """Read bytes without changing the current offset."""
         with self.at(self._offset):
-            return self.read_bytes(length)
+            return self.bytesRead(length)
 
     def _unpack(self, fmt: str) -> int | float:
         size = struct.calcsize(fmt)
-        return struct.unpack(fmt, self.read_bytes(size))[0]
+        return struct.unpack(fmt, self.bytesRead(size))[0]
 
     def uint8(self) -> int:
         return int(self._unpack("B"))

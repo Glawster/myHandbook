@@ -22,7 +22,7 @@ coordinates:
 ```python
 from fmparser.automation import Navigator, Recorder, ScreenMap
 
-screenMap = ScreenMap.from_yaml("screen-map.yaml")
+screenMap = ScreenMap.yamlLoad("screen-map.yaml")
 recorder = Recorder()
 navigator = Navigator(screenMap, recorder=recorder)
 
@@ -30,10 +30,10 @@ recorder.start()
 navigator.move("primary_button", duration=0.2)
 navigator.click("primary_button")
 navigator.shortcut("ctrl", "s")
-navigator.wait_for_image("templates/confirmation.png", timeout=5)
+navigator.imageWait("templates/confirmation.png", timeout=5)
 navigator.capture(name="confirmation.png")
 recorder.stop()
-recorder.save_yaml("output/recordings/example.yaml")
+recorder.yamlSave("output/recordings/example.yaml")
 ```
 
 Screenshots are written under `output/screenshots/` by default. PyAutoGUI uses the active Linux
@@ -52,7 +52,7 @@ coordinates, and run it with a navigator:
 from fmparser.automation import Navigator, ScreenMap
 from fmparser.automation.plugins import TacticsIPRoleCapturePlugin
 
-screenMap = ScreenMap.from_yaml("tactics_ip_role.screen-map.yaml")
+screenMap = ScreenMap.yamlLoad("tactics_ip_role.screen-map.yaml")
 plugin = TacticsIPRoleCapturePlugin(Navigator(screenMap))
 result = plugin.tacticsCapture()
 ```

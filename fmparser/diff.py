@@ -8,7 +8,8 @@ from pathlib import Path
 from fmparser.structures import Change, ChangeGroup
 
 
-def changed_bytes(old: bytes, new: bytes) -> tuple[Change, ...]:
+def bytesChanged(old: bytes, new: bytes) -> tuple[Change, ...]:
+    """Return byte-level changes between two byte strings."""
     changes: list[Change] = []
     sentinel = object()
     for offset, (old_byte, new_byte) in enumerate(zip_longest(old, new, fillvalue=sentinel)):
@@ -24,13 +25,14 @@ def changed_bytes(old: bytes, new: bytes) -> tuple[Change, ...]:
     return tuple(changes)
 
 
-def group_changes(changes: tuple[Change, ...], *, max_gap: int = 8) -> tuple[ChangeGroup, ...]:
+def changesGroup(changes: tuple[Change, ...], *, maxGap: int = 8) -> tuple[ChangeGroup, ...]:
+    """Group nearby byte changes into contiguous comparison regions."""
     if not changes:
         return ()
     groups: list[ChangeGroup] = []
     current = [changes[0]]
     for change in changes[1:]:
-        if change.offset - current[-1].offset <= max_gap:
+        if change.offset - current[-1].offset <= maxGap:
             current.append(change)
         else:
             groups.append(_make_group(current))
@@ -39,10 +41,11 @@ def group_changes(changes: tuple[Change, ...], *, max_gap: int = 8) -> tuple[Cha
     return tuple(groups)
 
 
-def diff_files(old_path: str | Path, new_path: str | Path) -> tuple[ChangeGroup, ...]:
-    old = Path(old_path).read_bytes()
-    new = Path(new_path).read_bytes()
-    return group_changes(changed_bytes(old, new))
+def filesDiff(oldPath: str | Path, newPath: str | Path) -> tuple[ChangeGroup, ...]:
+    """Read and compare two files, returning grouped byte changes."""
+    old = Path(oldPath).read_bytes()
+    new = Path(newPath).read_bytes()
+    return changesGroup(bytesChanged(old, new))
 
 
 def _make_group(changes: list[Change]) -> ChangeGroup:

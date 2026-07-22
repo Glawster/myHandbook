@@ -12,6 +12,8 @@ import yaml
 
 @dataclass(frozen=True, slots=True)
 class Point:
+    """An absolute desktop coordinate."""
+
     x: int
     y: int
 
@@ -23,7 +25,8 @@ class ScreenMap:
         self._coordinates = dict(coordinates)
 
     @classmethod
-    def from_yaml(cls, path: str | Path) -> ScreenMap:
+    def yamlLoad(cls, path: str | Path) -> ScreenMap:
+        """Load and validate named coordinates from a YAML file."""
         with Path(path).open(encoding="utf-8") as stream:
             data = yaml.safe_load(stream) or {}
         if not isinstance(data, Mapping):
@@ -58,6 +61,7 @@ class ScreenMap:
         return Point(x, y)
 
     def get(self, name: str) -> Point:
+        """Return a named coordinate or raise a descriptive error."""
         try:
             return self._coordinates[name]
         except KeyError as error:
