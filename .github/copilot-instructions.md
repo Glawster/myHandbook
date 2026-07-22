@@ -1,3 +1,4 @@
+<!-- synced from Glawster/organiseMyProjects -- do not edit directly -->
 # GitHub Copilot Instructions -- Master Development Guidelines (v2)
 
 # Table of Contents
