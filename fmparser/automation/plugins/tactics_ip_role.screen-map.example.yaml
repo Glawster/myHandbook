@@ -1,0 +1,6 @@
+# Replace these values with coordinates for the active Football Manager window.
+coordinates:
+  open_tactics: {x: 0, y: 0}
+  striker: {x: 0, y: 0}
+  ip_role: {x: 0, y: 0}
+  instructions: {x: 0, y: 0}

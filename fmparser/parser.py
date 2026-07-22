@@ -19,7 +19,8 @@ class FMFTactic:
     """Parsed tactic model.
 
     Most fields are intentionally optional at this stage. As byte mappings are proven, they should
-    be promoted from ``unknown`` into typed properties with evidence in ``docs/reverse-engineering.md``.
+    be promoted from ``unknown`` into typed properties with evidence in
+    ``documentation/reverseEngineering.md``.
     """
 
     metadata: TacticMetadata

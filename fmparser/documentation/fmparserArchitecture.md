@@ -53,9 +53,8 @@ fmparser/
         markdown.py
         html.py
 
-    cli/
-        __init__.py
-        main.py
+    cli.py
+    __main__.py
 
     config/
         roles/
@@ -447,13 +446,19 @@ fmparser squad roles squad.csv --role half_back
 fmparser squad report squad.csv --format markdown
 ```
 
-The existing binary-inspection CLI commands can remain, but the command tree should make the two capabilities obvious:
+The tactic-file workflow should be flag-led so common commands read naturally:
 
 ```text
-fmparser fmf inspect tactic.fmf
-fmparser fmf diff old.fmf new.fmf
+fmparser --tactic tactic.fmf --inspect
+fmparser --tactic tactic.fmf --print
+fmparser --tactic old.fmf --compare new.fmf
+fmparser --tactic tactic.fmf --save
+fmparser --inspect
 fmparser squad roles squad.csv --role half_back
 ```
+
+When `--tactic` is omitted, FMParser should use the tactic path stored in
+`~/.config/fmparser/config.json`.
 
 ## Testing Strategy
 

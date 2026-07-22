@@ -8,6 +8,10 @@ exports/pdf/*.pdf
 # Temporary files
 *.tmp
 *.bak
+*.bundle
+local-bundles/
+bundle-exports/
+output/
 
 # Linux
 *~
@@ -17,6 +21,7 @@ exports/pdf/*.pdf
 
 # Python
 __pycache__/
+.pytest_cache/
 
 node_modules/
 node_modules

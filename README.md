@@ -8,7 +8,10 @@ The aim is not to create formal publications. The aim is to keep practical docum
 
 - [Changelog](CHANGELOG.md)
 - [Contributing](CONTRIBUTING.md)
+- [Reverse Engineering Notes](documentation/reverseEngineering.md)
+- [FM26 Skin Bundle Explorer](documentation/skinBundleExplorer.md)
 - [FMParser Core Architecture](documentation/fmparserArchitecture.md)
+- [FMParser Automation Framework](documentation/automationFramework.md)
 - [Reverse Engineering Notes](documentation/reverseEngineering.md)
 - [Roadmap](documentation/roadmap.md)
 - [Style Guide](documentation/styleGuide.md)
@@ -26,10 +29,12 @@ The aim is not to create formal publications. The aim is to keep practical docum
 
 ```text
 templates/          Shared LibreOffice template and template assets
+documentation/      Living project guides and planning notes
 football-manager/   Football Manager coaching manual and supporting material
 walking-football/   Walking football coaching manual, drills and diagrams
 linux/              Linux reference manual, notes and scripts
 shared/             Shared icons, images and diagrams
+scripts/            Safe-by-default maintenance scripts
 ```
 
 ## Working Standard
