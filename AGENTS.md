@@ -1,3 +1,4 @@
+<!-- synced from Glawster/organiseMyProjects -- do not edit directly -->
 # Codex instructions
 
 Read and follow `.github/copilot-instructions.md`.
