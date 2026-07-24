@@ -5,7 +5,7 @@ from fmparser.automation.navigator import Navigator
 from fmparser.automation.recorder import Recorder
 from fmparser.automation.screen_map import Point, ScreenMap
 from fmparser.automation.screenshot import ScreenshotManager
-from fmparser.automation.template_matcher import Match, TemplateMatcher
+from fmparser.automation.templateMatcher import Match, TemplateMatcher
 
 __all__ = [
     "Action",
