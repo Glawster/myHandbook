@@ -18,6 +18,7 @@ The aim is not to create formal publications. The aim is to keep practical docum
 - [Volume 1 Editorial Plan](documentation/volume1EditorialPlan.md)
 - [FM Parser Samples](fmparser/samples/README.md)
 - [Templates Changelog](templates/CHANGELOG.md)
+- [Walking Football Session Builder](walking-football/README.md)
 
 ## Current Areas
 
