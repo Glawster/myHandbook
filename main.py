@@ -11,12 +11,12 @@ from organiseMyProjects.logUtils import setApplication
 thisApplication = Path(__file__).parent.name
 setApplication(thisApplication)
 
-from fmparser.cli import main as fmparserMain  # noqa: E402
+from fmsat.cli import main as fmsatMain  # noqa: E402
 
 
 def main() -> int:
     """Run the default repository command line tool."""
-    return fmparserMain()
+    return fmsatMain()
 
 
 if __name__ == "__main__":
