@@ -11,7 +11,7 @@ from organiseMyProjects.logUtils import setApplication
 thisApplication = Path(__file__).parent.name
 setApplication(thisApplication)
 
-from fmsat.cli import main as fmsatMain  # noqa: E402
+from fmsat.main import main as fmsatMain  # noqa: E402
 
 
 def main() -> int:

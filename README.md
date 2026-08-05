@@ -32,7 +32,7 @@ consistent structure so they are easy to return to, improve and reuse.
 data from Football Manager screenshots. Phase 1 supports the Squad Attributes screen and
 stores user-confirmed results in SQLite. It does not modify Football Manager or read save
 files. The same package also contains the repository's existing `.fmf` inspection and
-comparison utilities, available through the `fmsat-parser` command.
+comparison utilities, available through the `fmsat parser` command.
 
 ## Repository Structure
 

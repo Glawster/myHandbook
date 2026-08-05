@@ -14,6 +14,7 @@ dependencies = [
     "numpy>=1.26.0",
     "opencv-python-headless>=4.10.0",
     "PaddleOCR>=2.8.0,<3.0",
+    "paddlepaddle>=3.0,<4.0",
     "PySide6>=6.7.0",
     "PyYAML>=6.0.1",
     "SQLAlchemy>=2.0.0",
@@ -29,8 +30,7 @@ dev = [
 ]
 
 [project.scripts]
-fmsat = "fmsat.app.main:main"
-fmsat-parser = "fmsat.cli:main"
+fmsat = "fmsat.main:main"
 
 [tool.pytest.ini_options]
 testpaths = ["fmsat/tests"]
