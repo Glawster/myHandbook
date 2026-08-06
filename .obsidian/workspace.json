@@ -1,0 +1,198 @@
+{
+  "main": {
+    "id": "62ac7f8002c32651",
+    "type": "split",
+    "children": [
+      {
+        "id": "9c25a6257117efa9",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "5d9a66d93995bcea",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "walking-football/sessions/03-turningUnderPressure.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "03-turningUnderPressure"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "4977d5b417fbf90c",
+    "type": "split",
+    "children": [
+      {
+        "id": "1dfe264d47a3d049",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "77a4bc7d5409360e",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "fadcdc3cabf9f46a",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "9c8fb9cefc4bbccd",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "99b95fe3d2d9fc1c",
+    "type": "split",
+    "children": [
+      {
+        "id": "17ecfc0fbb0399f7",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "9910a146a4c4b1ba",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "walking-football/sessions/03-turningUnderPressure.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks"
+            }
+          },
+          {
+            "id": "e55eb09db77a7afd",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "walking-football/sessions/03-turningUnderPressure.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links"
+            }
+          },
+          {
+            "id": "2f736f4f5ec41196",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "3eff476420b302ec",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "9bab495f600c361b",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "walking-football/sessions/03-turningUnderPressure.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "5d9a66d93995bcea",
+  "lastOpenFiles": [
+    "AGENTS.md",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "README.md"
+  ]
+}
