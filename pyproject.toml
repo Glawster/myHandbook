@@ -11,6 +11,7 @@ requires-python = ">=3.12"
 license = "MIT"
 authors = [{ name = "FMSAT contributors" }]
 dependencies = [
+    "organiseMyProjects>=0.3",
     "numpy>=1.26.0",
     "opencv-python-headless>=4.10.0",
     "PaddleOCR>=2.8.0,<3.0",
