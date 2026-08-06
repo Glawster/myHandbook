@@ -50,8 +50,6 @@ If any other repository guidance contradicts this file, this file takes preceden
 -   Bash uses set -euo pipefail\
 -   Use type hints\
 -   Use docstrings for public functions/classes
--   Use camelCase for project-owned file names, variables, parameters, functions, and object properties\
--   Keep ecosystem-mandated names such as `__init__.py`, `pyproject.toml`, framework hooks, external API keywords, and persisted schema identifiers unchanged
 
 ## Separation of Concerns
 
@@ -201,10 +199,6 @@ Never expose `--dry-run` as the CLI flag. Use `dryRun` only as the internal bool
 # Environment & Dependency Policy
 
 -   Target Python 3.10+\
--   Prefer Conda for Python environment management\
--   Provide a project-specific camelCase Conda environment file, for example `projectNameEnvironment.yml`\
--   Declare packaged Python dependencies in `pyproject.toml` and install the package in editable mode from the Conda environment\
--   Document the Conda workflow before alternative `venv` instructions\
 -   Use requirements.txt unless packaged\
 -   Do not auto-install dependencies at runtime\
 -   Fail fast if external tools are missing\

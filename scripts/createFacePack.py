@@ -26,6 +26,10 @@ userConfigFile = Path.home() / ".config" / thisApplication / "config.json"
 supportedExtensions = {
     ".png",
 }
+pngSourceExtensions = {
+    ".jpg",
+    ".jpeg",
+}
 
 
 ## cli
@@ -54,6 +58,11 @@ def buildParser() -> argparse.ArgumentParser:
         action="store_true",
         help="center-crop PNG files to 250x250 before mapping them",
     )
+    parser.add_argument(
+        "--png",
+        action="store_true",
+        help="create missing PNG files from numeric JPG files before copying and mapping",
+    )
     return parser
 
 
@@ -73,12 +82,13 @@ def main(argv: list[str] | None = None) -> int:
         logger.value("sourceDir", sourceDir)
         logger.value("downloadsDir", downloadsDir)
         logger.value("crop", args.crop)
+        logger.value("png", args.png)
         logger.value("dryRun", dryRun)
 
         if args.source is not None:
             userConfigSave({"source": str(sourceDir)})
 
-        summary = workflowRun(sourceDir, crop=args.crop, dryRun=dryRun)
+        summary = workflowRun(sourceDir, crop=args.crop, png=args.png, dryRun=dryRun)
     except Exception as error:
         logger.error("face pack update failed: %s", error)
         print(f"Error: {error}", file=sys.stderr)
@@ -92,16 +102,17 @@ def main(argv: list[str] | None = None) -> int:
 ## workflow
 
 
-def workflowRun(sourceDir: Path, *, crop: bool, dryRun: bool) -> dict[str, int]:
+def workflowRun(sourceDir: Path, *, crop: bool, png: bool, dryRun: bool) -> dict[str, int]:
     """Copy and map Football Manager PNG face images, optionally cropping them."""
     configFile = sourceDir / "config.xml"
     tree, maps = configLoad(configFile)
     existingIds = mappingsReadIds(maps)
 
-    downloadImages = downloadsFindImages(downloadsDir)
-    sourceImages, skippedCount = sourceFindImages(sourceDir)
+    downloadImages, downloadPngCount = downloadsFindImages(downloadsDir, png=png, dryRun=dryRun)
+    sourceImages, skippedCount, sourcePngCount = sourceFindImages(sourceDir, png=png, dryRun=dryRun)
 
     copiedCount = 0
+    pngCount = downloadPngCount + sourcePngCount
     processedImages = [*sourceImages]
 
     for downloadFile in downloadImages:
@@ -139,6 +150,7 @@ def workflowRun(sourceDir: Path, *, crop: bool, dryRun: bool) -> dict[str, int]:
         "addedCount": addedCount,
         "copiedCount": copiedCount,
         "existingCount": len(existingIds),
+        "pngCount": pngCount,
         "skippedCount": skippedCount,
         "updatedCount": updatedCount,
     }
@@ -243,22 +255,15 @@ def downloadsCopyImage(downloadFile: Path, destination: Path, *, dryRun: bool) -
     shutil.copy2(downloadFile, destination)
 
 
-def downloadsFindImages(sourceDir: Path) -> list[Path]:
+def downloadsFindImages(sourceDir: Path, *, png: bool, dryRun: bool) -> tuple[list[Path], int]:
     """Find numeric Football Manager image files in the downloads folder."""
     if not sourceDir.is_dir():
         logger.info("downloads folder not found: %s", sourceDir)
-        return []
+        return [], 0
 
-    imagesById: dict[str, Path] = {}
-    for imageFile in sorted(sourceDir.iterdir()):
-        if imageFile.suffix.lower() not in supportedExtensions:
-            continue
-        if not imageFile.stem.isdigit():
-            continue
+    sourceImages, _, pngCount = sourceFindImages(sourceDir, png=png, dryRun=dryRun)
 
-        imagesById.setdefault(imageFile.stem, imageFile)
-
-    return list(imagesById.values())
+    return sourceImages, pngCount
 
 
 ## images
@@ -289,6 +294,16 @@ def imageCrop(imageFile: Path, pngFile: Path, *, dryRun: bool) -> None:
             cropped = output
 
         cropped.save(pngFile)
+
+
+def imageCreatePng(imageFile: Path, pngFile: Path, *, dryRun: bool) -> None:
+    """Create a PNG copy of a source image."""
+    logActionPaths("create png", imageFile, pngFile)
+    if dryRun:
+        return
+
+    with Image.open(imageFile) as image:
+        image.save(pngFile)
 
 
 ## mappings
@@ -355,13 +370,15 @@ def pathValidateDirectory(sourceDir: Path) -> Path:
 ## source
 
 
-def sourceFindImages(sourceDir: Path) -> tuple[list[Path], int]:
+def sourceFindImages(sourceDir: Path, *, png: bool, dryRun: bool) -> tuple[list[Path], int, int]:
     """Find numeric source images."""
     skippedCount = 0
-    sourceImages = []
+    pngCount = 0
+    imagesById: dict[str, Path] = {}
 
     for imageFile in sorted(sourceDir.iterdir()):
-        if imageFile.suffix.lower() not in supportedExtensions:
+        fileSuffix = imageFile.suffix.lower()
+        if fileSuffix not in supportedExtensions and not (png and fileSuffix in pngSourceExtensions):
             continue
 
         playerId = imageFile.stem
@@ -370,9 +387,18 @@ def sourceFindImages(sourceDir: Path) -> tuple[list[Path], int]:
             skippedCount += 1
             continue
 
-        sourceImages.append(imageFile)
+        if fileSuffix in supportedExtensions:
+            imagesById.setdefault(playerId, imageFile)
+            continue
 
-    return sourceImages, skippedCount
+        pngFile = imageFile.with_suffix(".png")
+        if not pngFile.exists():
+            imageCreatePng(imageFile, pngFile, dryRun=dryRun)
+            pngCount += 1
+
+        imagesById.setdefault(playerId, pngFile)
+
+    return list(imagesById.values()), skippedCount, pngCount
 
 
 def sourceHasImage(sourceDir: Path, imageFile: Path) -> bool:
@@ -408,6 +434,7 @@ def summaryPrint(summary: dict[str, int], *, dryRun: bool, sourceDir: Path) -> N
     print("----------------------------------------")
     print(f"Source folder    : {sourceDir}")
     print(f"Downloads copied : {summary['copiedCount']}")
+    print(f"PNGs created     : {summary['pngCount']}")
     print(f"Images updated   : {summary['updatedCount']}")
     print(f"New mappings     : {summary['addedCount']}")
     print(f"Skipped files    : {summary['skippedCount']}")
