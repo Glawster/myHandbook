@@ -8,9 +8,6 @@ exports/pdf/*.pdf
 # Temporary files
 *.tmp
 *.bak
-*.bundle
-local-bundles/
-bundle-exports/
 
 # Linux
 *~
