@@ -13,6 +13,7 @@ consistent structure so they are easy to return to, improve and reuse.
 - [Reverse Engineering Notes](documentation/reverseEngineering.md)
 - [FM26 Skin Bundle Explorer](documentation/skinBundleExplorer.md)
 - [FMParser Core Architecture](documentation/fmparserArchitecture.md)
+- [FMParser Automation Framework](documentation/automationFramework.md)
 - [Reverse Engineering Notes](documentation/reverseEngineering.md)
 - [Roadmap](documentation/roadmap.md)
 - [Style Guide](documentation/styleGuide.md)
@@ -20,6 +21,7 @@ consistent structure so they are easy to return to, improve and reuse.
 - [FMSAT Samples](fmsat/samples/README.md)
 - [Football Manager Squad Assessment Tool](fmsat/README.md)
 - [Templates Changelog](templates/CHANGELOG.md)
+- [Walking Football Session Builder](walking-football/README.md)
 
 ## Current Areas
 

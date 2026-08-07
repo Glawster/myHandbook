@@ -11,6 +11,8 @@ exports/pdf/*.pdf
 *.bundle
 local-bundles/
 bundle-exports/
+output/
+walking-football/generated/
 
 # Linux
 *~
