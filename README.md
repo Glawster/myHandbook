@@ -1,8 +1,10 @@
 # My Handbook
 
-A personal knowledge repository containing coaching manuals, reference manuals, notes and supporting material.
+A personal knowledge repository containing coaching manuals, reference manuals, notes and
+supporting tools.
 
-The aim is not to create formal publications. The aim is to keep practical documents in a consistent structure so they are easy to return to, improve and reuse.
+The aim is not to create formal publications. The aim is to keep practical documents in a
+consistent structure so they are easy to return to, improve and reuse.
 
 ## Documentation
 
@@ -16,7 +18,8 @@ The aim is not to create formal publications. The aim is to keep practical docum
 - [Roadmap](documentation/roadmap.md)
 - [Style Guide](documentation/styleGuide.md)
 - [Volume 1 Editorial Plan](documentation/volume1EditorialPlan.md)
-- [FM Parser Samples](fmparser/samples/README.md)
+- [FMSAT Samples](fmsat/samples/README.md)
+- [Football Manager Squad Assessment Tool](fmsat/README.md)
 - [Templates Changelog](templates/CHANGELOG.md)
 - [Walking Football Session Builder](walking-football/README.md)
 
@@ -26,16 +29,27 @@ The aim is not to create formal publications. The aim is to keep practical docum
 - Walking Football Coaching Manual
 - Linux Reference Manual
 
+## Tools
+
+### Football Manager Squad Assessment Tool (FMSAT)
+
+[FMSAT](fmsat/README.md) is a local desktop application for extracting structured player
+data from Football Manager screenshots. Phase 1 supports the Squad Attributes screen and
+stores user-confirmed results in SQLite. It does not modify Football Manager or read save
+files. The same package also contains the repository's existing `.fmf` inspection and
+comparison utilities, available through the `fmsat parser` command.
+
 ## Repository Structure
 
 ```text
 templates/          Shared LibreOffice template and template assets
 documentation/      Living project guides and planning notes
 football-manager/   Football Manager coaching manual and supporting material
-walking-football/   Walking football coaching manual, drills and diagrams
+walking-football/   Walking Football coaching manual, drills and diagrams
 linux/              Linux reference manual, notes and scripts
 shared/             Shared icons, images and diagrams
 scripts/            Safe-by-default maintenance scripts
+fmsat/              Football Manager parsing and screenshot assessment tools
 ```
 
 ## Working Standard
@@ -49,4 +63,5 @@ The preferred workflow is:
 3. Let the template styles do the formatting.
 4. Export final PDFs into the relevant `exports/` folder when needed.
 
-The template should do the work. If repeated manual style changes are needed, improve the template rather than accepting the extra step.
+The template should do the work. If repeated manual style changes are needed, improve the
+template rather than accepting the extra step.
