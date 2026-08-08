@@ -65,3 +65,7 @@ The preferred workflow is:
 
 The template should do the work. If repeated manual style changes are needed, improve the
 template rather than accepting the extra step.
+
+
+## Project moved
+fmsat is now maintained at git@github.com:Glawster/fmsat
